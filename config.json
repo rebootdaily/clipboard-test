@@ -1335,7 +1335,7 @@
     {
       "Display Order": 1061,
       "Tab": "Interior",
-      "Section": "f",
+      "Section": "Finishes",
       "Field Label": "Ceiling Height",
       "Field ID": "ceiling_hight",
       "Input Type": "Text",
