@@ -1,24 +1,25 @@
-Clipboard v4
+Clipboard v4.3.2 Clean Build
 
-WINDOWS
-1. Keep Clipboard_v4_Master_Base.xlsx in this folder.
-2. Double-click Start_Clipboard_v4.bat.
-3. The batch file runs generate.py, rebuilds clipboard_generated/config.json from the workbook, and opens http://localhost:8000.
-4. Keep the command window open while using Clipboard.
+SOURCE OF TRUTH
+- Clipboard_v4_Master_Base.xlsx: inspection form configuration
+- app_template/app.js: application logic
+- app_template/index.html: application layout and styles
+- app_template/manifest.json: installable web app metadata
+- generate.py: builds config.json and publishes the app
 
-MAC
-Double-click start_clipboard_v4.command. You may need to allow it in Privacy & Security the first time.
+GENERATE AND TEST
+Windows: double-click Start_Clipboard_v4.bat
+macOS: run start_clipboard_v4.command
 
-IMPORTANT
-- The workbook is now the live source of truth.
-- Save workbook changes before starting Clipboard.
-- Each launch regenerates config.json from the workbook.
-- App data is stored locally in the browser under the Clipboard v4 storage key.
-- Photos are represented by metadata in this prototype.
-- Sketch remains a placeholder.
+The generator recreates clipboard_generated and publishes these files to the project root for GitHub Pages:
+- app.js
+- config.json
+- index.html
+- manifest.json
 
-Version 4.1 visibility fix:
-- Applies workbook default values even when older browser data exists.
-- Supports =, ==, !=, <>, >, <, >=, <=, AND, and OR visibility rules.
-- Re-evaluates visibility immediately when dropdowns or other fields change.
-- Clears values for fields that become hidden.
+Do not edit files in clipboard_generated or the published root copies. Edit only the workbook, generate.py, or app_template files, then rebuild.
+
+v4.3.2 fixes
+- Text, currency, date, time, and long-text fields no longer lose focus while typing.
+- Counter bar remains hidden outside Interior, Sketch, Exit Interview, and Review.
+- Obsolete versioned JavaScript files are removed during publishing.

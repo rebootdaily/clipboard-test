@@ -132,8 +132,8 @@ def build_config(s):
         if len(r) >= 2 and str(r[0]).strip():
             settings[str(r[0]).strip()] = r[1]
 
-    settings['Version'] = '4.3.1'
-    settings['Workbook Role'] = 'Live master configuration for Clipboard v4.3'
+    settings['Version'] = '4.3.2'
+    settings['Workbook Role'] = 'Live master configuration for Clipboard v4.3.2'
 
     nav = []
     for r in s.get("Navigation", [])[1:]:
@@ -209,6 +209,10 @@ def copy_template_to_build():
 
 def publish_build_to_root():
     published = []
+
+    # Remove obsolete versioned application files from the published root.
+    for stale in ROOT.glob("app-v*.js"):
+        stale.unlink()
 
     for source in BUILD.iterdir():
         destination = ROOT / source.name
