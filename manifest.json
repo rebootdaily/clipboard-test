@@ -1,0 +1,9 @@
+{
+  "name": "Clipboard Inspection v4",
+  "short_name": "Clipboard",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2f5",
+  "theme_color": "#17324d",
+  "icons": []
+}
