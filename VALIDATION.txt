@@ -1,0 +1,7 @@
+Clipboard v4 workbook validation
+Workbook: Clipboard_v4_Master_Base.xlsx
+APP DESIGN fields: 118
+Follow-up questions: 97
+Lists: 70
+Navigation tabs: 9
+Issues: 0
