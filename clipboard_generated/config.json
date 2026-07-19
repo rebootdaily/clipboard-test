@@ -3629,8 +3629,8 @@
   },
   "settings": {
     "App Name": "Clipboard",
-    "Version": "3.0 Base",
-    "Workbook Role": "Master configuration for review",
+    "Version": "4.3",
+    "Workbook Role": "Live master configuration for Clipboard v4.3",
     "Theme": "Light",
     "Large Text": "Yes",
     "Large Buttons": "Yes",
