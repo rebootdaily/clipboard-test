@@ -1,271 +1,139 @@
-(() => {
-  'use strict';
+let CFG,state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};
+const STORAGE_KEY='clipboard-v5-0a-state';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function init(){
+  CFG=await fetch('config.json?v=5.0a',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
+  const defaults={};
+  [...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')defaults[f['Field ID']]=f['Default Value']});
+  const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-2-state')||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
+  if(saved){try{const parsed=JSON.parse(saved);state={...state,...parsed,values:{...defaults,...(parsed.values||{})},notes:parsed.notes||{},flags:parsed.flags||{},photos:parsed.photos||{},sketch:parsed.sketch||{strokes:[],background:'',viewport:{scale:1,x:0,y:0}}}}catch(e){state.values={...defaults}}}
+  else state.values={...defaults};
+  $('#brand').textContent=CFG.settings['App Name']||'Clipboard';
+  $('#version').textContent=CFG.settings.Version||'5.0a';
+  buildTabs();render();updateCounters();$('#saveBtn').onclick=save;
+}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('#saveBtn').textContent='✓';setTimeout(()=>$('#saveBtn').textContent='💾',700)}function optionsFor(ref){if(!ref)return[];if(CFG.lists[ref])return CFG.lists[ref];return String(ref).split(/[,;|]/).map(x=>x.trim()).filter(Boolean)}function truth(v){return['yes','true','1','enabled'].includes(String(v??'').toLowerCase())||v===true}
+function normalizeValue(v){return Array.isArray(v)?v.map(x=>String(x).trim()):String(v??'').trim()}
+function compareValues(actual,operator,expected){
+  const a=normalizeValue(actual),e=String(expected??'').trim();
+  const equal=Array.isArray(a)?a.includes(e):a===e;
+  if(operator==='='||operator==='==')return equal;
+  if(operator==='!='||operator==='<>')return !equal;
+  const an=Number(Array.isArray(a)?a[0]:a),en=Number(e);
+  if(Number.isNaN(an)||Number.isNaN(en))return false;
+  if(operator==='>')return an>en;if(operator==='<')return an<en;if(operator==='>=')return an>=en;if(operator==='<=')return an<=en;
+  return false;
+}
+function evaluateClause(clause){
+  const text=String(clause||'').trim().replace(/^\((.*)\)$/,'$1').trim();
+  const m=text.match(/^([^=!<>]+?)\s*(>=|<=|<>|!=|==|=|>|<)\s*(.*?)$/);
+  if(!m)return false;
+  return compareValues(state.values[m[1].trim()],m[2],m[3].trim());
+}
+function ruleVisible(rule){
+  const text=String(rule??'').trim();
+  if(!text||/^always$/i.test(text))return true;
+  return text.split(/\s*(?:\|\||OR)\s*/i).some(orPart=>orPart.split(/\s*(?:&&|AND)\s*/i).every(evaluateClause));
+}
+function clearHiddenValues(){
+  let changed=false;
+  [...CFG.app,...CFG.followups].forEach(f=>{const id=f['Field ID'];if(id&&f['Visibility Rule']&&!ruleVisible(f['Visibility Rule'])&&Object.prototype.hasOwnProperty.call(state.values,id)){delete state.values[id];changed=true}});
+  return changed;
+}
+function buildTabs(){let nav=CFG.navigation||[];if(!nav.includes('Sketch'))nav.splice(Math.max(0,nav.length-1),0,'Sketch');if(!nav.includes('Exit Interview'))nav.splice(Math.max(0,nav.length-1),0,'Exit Interview');$('#tabs').innerHTML=nav.map(t=>`<button class="tab ${state.activeTab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.activeTab=b.dataset.tab;buildTabs();render();scrollTo(0,0)})}
+function hasMeaningfulValue(v){return v!==undefined&&v!==null&&v!==''&&!(Array.isArray(v)&&!v.length)&&v!==false&&String(v).toLowerCase()!=='no'&&Number(v)!==0}
+function followTriggerMatches(f,v){
+  if(!hasMeaningfulValue(v))return false;
+  const group=String(f['Follow-Up Group']||'').toLowerCase(),text=(Array.isArray(v)?v.join(' '):String(v)).toLowerCase();
+  if(group==='well')return text.includes('well');
+  if(group==='septic')return text.includes('septic');
+  if(group==='pud'||group==='hoa'||group==='pool'||group==='solar'||group.includes('garage conversion')||group.includes('addition')||group.includes('detached')||group.includes('fireplace')||group.includes('dock'))return truth(v)||!['no','none','not present','0'].includes(text);
+  return true;
+}
+function activeFollowGroups(){let groups=new Set(['General']);CFG.app.forEach(f=>{if(truth(f['Trigger Follow-Up'])&&f['Follow-Up Group']){let v=state.values[f['Field ID']];if(followTriggerMatches(f,v))groups.add(f['Follow-Up Group'])}});return groups}
+function rowsForTab(tab){if(tab==='Exit Interview'){let groups=activeFollowGroups();return CFG.followups.filter(f=>groups.has(f['Follow-Up Group'])&&ruleVisible(f['Visibility Rule'])).sort((a,b)=>{const ga=CFG.followups.findIndex(x=>x['Follow-Up Group']===a['Follow-Up Group']),gb=CFG.followups.findIndex(x=>x['Follow-Up Group']===b['Follow-Up Group']);return ga-gb||Number(a['Display Order']||999)-Number(b['Display Order']||999)})}return CFG.app.filter(f=>f.Tab===tab&&truth(f.Visible??'Yes')&&ruleVisible(f['Visibility Rule'])).sort((a,b)=>Number(a['Display Order']||999)-Number(b['Display Order']||999))}
+function updateCounterVisibility(){const bar=$('#counterbar');if(bar)bar.hidden=!['Interior','Sketch','Exit Interview','Review'].includes(state.activeTab)}
+function render(){updateCounterVisibility();if(state.activeTab==='Sketch')return renderSketch();if(state.activeTab==='Review')return renderReview();let rows=rowsForTab(state.activeTab),groupKey=state.activeTab==='Exit Interview'?'Follow-Up Group':'Section',html='',last='';for(const f of rows){let sec=f[groupKey]||'General';if(sec!==last){html+=`<h2 class="section-title">${esc(sec)}</h2>`;last=sec}html+=fieldHtml(f)}if(!html)html='<div class="empty">No fields are configured for this tab yet.</div>';$('#screen').innerHTML=html;wireFields()}
+function fieldHtml(f){let id=f['Field ID'],val=state.values[id],req=truth(f.Required),flagged=state.flags[id];return`<section class="field ${req?'required':''} ${flagged?'flagged':''}" data-id="${esc(id)}"><div class="labelrow"><div class="label">${esc(f['Field Label']||f.Question)}</div><div class="tools"><button class="iconbtn noteBtn ${state.notes[id]?'active':''}" title="Add note">📝</button><label class="iconbtn" title="Add photo">📷<input class="photo-input" type="file" accept="image/*" capture="environment" multiple></label><button class="iconbtn flagBtn ${flagged?'active':''}" title="Flag for review">⚑</button></div></div><div class="control">${controlHtml(f,val)}</div><div class="note ${state.notes[id]!==undefined?'open':''}"><textarea class="noteText" placeholder="Note for this field">${esc(state.notes[id]||'')}</textarea></div><div class="photo-count">${(state.photos[id]||[]).length?`${state.photos[id].length} photo(s) attached`:''}</div></section>`}
+function controlHtml(f,val){let type=f['Input Type'],opts=optionsFor(f.Options);if(type==='LongText')return`<textarea class="value" placeholder="Enter details">${esc(val||'')}</textarea>`;if(type==='Text'||type==='Currency')return`<input class="value" type="${type==='Currency'?'number':'text'}" value="${esc(val??'')}" ${type==='Currency'?'step="0.01"':''}>`;if(type==='Date'||type==='Time')return`<input class="value" type="${type.toLowerCase()}" value="${esc(val??'')}">`;if(type==='Dropdown')return`<select class="value"><option value="">Select…</option>${opts.map(o=>`<option value="${esc(o)}" ${String(val)===String(o)?'selected':''}>${esc(o)}</option>`).join('')}</select>`;if(type==='Button'||type==='Toggle'||type==='Rating')return`<div class="choices ${type==='Toggle'?'toggle':''}">${(opts.length?opts:(type==='Toggle'?['Yes','No']:[])).map(o=>`<button class="choice ${String(val)===String(o)?'selected':''}" data-choice="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='MultiSelect')return`<div class="choices">${opts.map(o=>`<button class="choice ${(Array.isArray(val)&&val.includes(o))?'selected':''}" data-multi="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='Checkbox')return`<label><input class="checkValue" type="checkbox" ${truth(val)?'checked':''}> Yes</label>`;if(type==='Counter')return`<div class="counter"><button data-delta="-1">−</button><output>${Number(val||0)}</output><button data-delta="1">+</button></div>`;if(type==='Camera')return`<label class="action secondary">Add photo<input class="photo-input valuePhoto" type="file" accept="image/*" capture="environment" multiple></label>`;if(type==='Sketch')return`<button class="action secondary openSketch">Open Sketch Workspace</button>`;return`<input class="value" type="text" value="${esc(val??'')}">`}
+function wireFields(){document.querySelectorAll('.field').forEach(el=>{let id=el.dataset.id,input=el.querySelector('.value');if(input)input.oninput=()=>{state.values[id]=input.value;save()};let check=el.querySelector('.checkValue');if(check)check.onchange=()=>{state.values[id]=check.checked;changed()};el.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{state.values[id]=b.dataset.choice;changed(true)});el.querySelectorAll('[data-multi]').forEach(b=>b.onclick=()=>{let a=Array.isArray(state.values[id])?[...state.values[id]]:[],x=b.dataset.multi;a.includes(x)?a.splice(a.indexOf(x),1):a.push(x);state.values[id]=a;changed(true)});el.querySelectorAll('[data-delta]').forEach(b=>b.onclick=()=>{state.values[id]=Math.max(0,Number(state.values[id]||0)+Number(b.dataset.delta));changed(true)});el.querySelector('.noteBtn').onclick=()=>{let n=el.querySelector('.note');n.classList.toggle('open');if(n.classList.contains('open')&&state.notes[id]===undefined)state.notes[id]=''};el.querySelector('.noteText').oninput=e=>{state.notes[id]=e.target.value;save()};el.querySelector('.flagBtn').onclick=()=>{state.flags[id]=!state.flags[id];changed(true)};el.querySelectorAll('.photo-input').forEach(inp=>inp.onchange=()=>{state.photos[id]=[...(state.photos[id]||[]),...Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type}))];changed(true)});let os=el.querySelector('.openSketch');if(os)os.onclick=()=>{state.activeTab='Sketch';buildTabs();render();scrollTo(0,0)}})}
+function changed(r=false){clearHiddenValues();updateCounters();save();if(r)render()}function updateCounters(){[['liveBeds','bedroom_count'],['liveFull','full_bath_count'],['liveHalf','half_bath_count'],['liveSmoke','smoke_co_count']].forEach(([a,b])=>$('#'+a).textContent=Number(state.values[b]||0))}
 
-  const svg = document.getElementById('sketch');
-  const lengthInput = document.getElementById('lengthInput');
-  const approxBtn = document.getElementById('approxBtn');
-  const undoBtn = document.getElementById('undoBtn');
-  const finishBtn = document.getElementById('finishBtn');
-  const toolsBtn = document.getElementById('toolsBtn');
-  const toolsDialog = document.getElementById('toolsDialog');
-  const classifyDialog = document.getElementById('classifyDialog');
-  const classifyTitle = document.getElementById('classifyTitle');
-  const classifyAreaText = document.getElementById('classifyAreaText');
-  const classifyChoices = document.getElementById('classifyChoices');
-  const backOutDialog = document.getElementById('backOutDialog');
-  const backOutChoices = document.getElementById('backOutChoices');
-  const modeBadge = document.getElementById('modeBadge');
-  const closureText = document.getElementById('closureText');
+let sketchTool='directional',sketchUndo=[],sketchRedo=[],sketchPointer=null;
+const SKETCH_PX_PER_FOOT=8;
+function uid(prefix='id'){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
+function defaultFloor(name='First Floor'){return{id:uid('floor'),name,items:[],background:'',directional:{activeId:null,tolerance:1}}}
+function defaultStructure(name='Main Dwelling',includeInMainGLA=true){const floor=defaultFloor();return{id:uid('structure'),name,includeInMainGLA,floors:[floor],activeFloorId:floor.id}}
+function ensureSketch(){
+  if(!state.sketch||typeof state.sketch!=='object')state.sketch={};
+  const s=state.sketch;s.viewport=s.viewport||{scale:1,x:0,y:0};
+  if(!Array.isArray(s.structures)||!s.structures.length){const main=defaultStructure();if(Array.isArray(s.strokes)&&s.strokes.length)main.floors[0].items=s.strokes.map(st=>({...st,id:uid('legacy'),kind:st.type==='line'?'referenceLine':st.type==='rect'?'freeformRect':'freeform'}));main.floors[0].background=s.background||'';s.structures=[main];s.activeStructureId=main.id;s.activeFloorId=main.floors[0].id;delete s.strokes;delete s.background}
+  let structure=s.structures.find(x=>x.id===s.activeStructureId)||s.structures[0];s.activeStructureId=structure.id;
+  if(!Array.isArray(structure.floors)||!structure.floors.length)structure.floors=[defaultFloor()];
+  let floor=structure.floors.find(x=>x.id===s.activeFloorId)||structure.floors.find(x=>x.id===structure.activeFloorId)||structure.floors[0];s.activeFloorId=floor.id;structure.activeFloorId=floor.id;
+  floor.items=floor.items||[];floor.background=floor.background||'';floor.directional=floor.directional||{activeId:null,tolerance:1};if(!Number.isFinite(Number(floor.directional.tolerance)))floor.directional.tolerance=1;
+  return s;
+}
+function activeStructure(){const s=ensureSketch();return s.structures.find(x=>x.id===s.activeStructureId)||s.structures[0]}
+function activeFloor(){const s=ensureSketch(),st=activeStructure();return st.floors.find(x=>x.id===s.activeFloorId)||st.floors[0]}
+function sketchSnapshot(){return JSON.parse(JSON.stringify(ensureSketch()))}
+function pushSketchHistory(){sketchUndo.push(sketchSnapshot());if(sketchUndo.length>50)sketchUndo.shift();sketchRedo=[]}
+function polygonArea(points){if(!Array.isArray(points)||points.length<3)return 0;let sum=0;for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];sum+=a.x*b.y-b.x*a.y}return Math.abs(sum)/2/(SKETCH_PX_PER_FOOT*SKETCH_PX_PER_FOOT)}
+function itemArea(item){if(item.kind==='directionalFootprint'&&item.closed)return polygonArea(item.points);if(item.kind==='measuredArea')return Math.max(0,Number(item.length)||0)*Math.max(0,Number(item.width)||0);if(item.kind==='openToBelow')return-Math.max(0,Number(item.length)||0)*Math.max(0,Number(item.width)||0);return 0}
+function floorArea(floor){return Math.max(0,(floor.items||[]).reduce((sum,item)=>sum+itemArea(item),0))}
+function structureArea(st){return(st.floors||[]).reduce((sum,f)=>sum+floorArea(f),0)}
+function formatArea(n){return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:1})+' sf'}
+function activeDirectional(){const f=activeFloor(),id=f.directional&&f.directional.activeId;return(f.items||[]).find(x=>x.id===id&&x.kind==='directionalFootprint')||null}
+function parseFeet(value){let s=String(value??'').trim().toLowerCase();if(!s)return NaN;s=s.replace(/feet|foot|ft/g,"'").replace(/inches|inch|in/g,'"');const m=s.match(/^\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)?\s*"?\s*$/);if(m)return Number(m[1])+(m[2]?Number(m[2])/12:0);const inches=s.match(/^\s*(\d+(?:\.\d+)?)\s*"\s*$/);if(inches)return Number(inches[1])/12;const dash=s.match(/^\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*$/);if(dash)return Number(dash[1])+Number(dash[2])/12;const n=Number(s.replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?n:NaN}
+function setSketchTool(tool){sketchTool=tool;document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.sketchTool===tool));const c=$('#sketchCanvas');if(c)c.style.cursor=tool==='eraser'?'cell':tool==='pan'?'grab':tool==='label'?'text':tool==='directional'?'crosshair':'crosshair';const names={directional:'Directional Exterior',measuredArea:'Calculated Area',openToBelow:'Open to Below / Subtract',exteriorWall:'Exterior Wall',referenceLine:'Freeform Line',freehand:'Freehand',label:'Annotation',eraser:'Eraser',pan:'Pan'};const st=$('#sketchToolStatus');if(st)st.textContent='Tool: '+(names[tool]||tool);const panel=$('#directionalPanel');if(panel)panel.hidden=tool!=='directional'}
+function sketchSummaryHtml(){const s=ensureSketch();let main=0;const cards=s.structures.map(st=>{const total=structureArea(st);if(st.includeInMainGLA)main+=total;return`<div class="sketch-summary-structure"><b>${esc(st.name)}</b><span>${formatArea(total)}${st.includeInMainGLA?' • Main GLA':' • Separate / excluded from main GLA'}</span>${st.floors.map(f=>`<small>${esc(f.name)}: ${formatArea(floorArea(f))}</small>`).join('')}</div>`}).join('');return`<div class="sketch-summary"><div class="sketch-gla"><span>Main Dwelling GLA</span><b>${formatArea(main)}</b></div>${cards}</div>`}
+function directionalStatusHtml(){const item=activeDirectional();if(!item)return'<b>Tap the grid to set the starting corner.</b><span>First wall: enter length and tap an absolute direction.</span>';const committed=item.segments||[],live=item.liveSegments||[],pts=effectiveDirectionalPoints(item),current=pts[pts.length-1],start=pts[0],gap=Math.hypot(current.x-start.x,current.y-start.y)/SKETCH_PX_PER_FOOT;return`<b>${item.closed?'Footprint closed':`Wall ${committed.length+live.length+1}`}</b><span>${committed.length} committed • ${live.length} live${item.closed?` • ${formatArea(polygonArea(item.points))}`:` • Closure gap ${gap.toFixed(2)} ft`}</span>`}
+function effectiveDirectionalPoints(item){return[...(item.points||[]),...((item.livePoints||[]).slice(1))]}
+function currentHeading(item){const segs=[...(item.segments||[]),...(item.liveSegments||[])];return segs.length?Number(segs[segs.length-1].heading):null}
+function headingVector(deg,length){const r=deg*Math.PI/180,d=length*SKETCH_PX_PER_FOOT;return{x:Math.cos(r)*d,y:Math.sin(r)*d}}
+function normalizeHeading(deg){return((deg%360)+360)%360}
+function renderSketch(){const s=ensureSketch(),st=activeStructure(),floor=activeFloor();$('#screen').innerHTML=`<h2 class="section-title">Measurement Workspace <span class="version-chip">5.0a Locked</span></h2><div class="sketch-card"><div class="sketch-manager"><label>Structure<select id="sketchStructureSelect">${s.structures.map(x=>`<option value="${esc(x.id)}" ${x.id===st.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><label>Floor<select id="sketchFloorSelect">${st.floors.map(x=>`<option value="${esc(x.id)}" ${x.id===floor.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label></div><div class="sketch-toolbar compact"><button class="action secondary" id="addStructure">+ Structure</button><button class="action secondary" id="editStructure">Edit Structure</button><button class="action secondary" id="addFloor">+ Floor</button><button class="action secondary" id="copyFloor">Copy Floor</button><button class="action secondary danger" id="deleteFloor">Delete Floor</button></div><div class="sketch-help"><b>Live-chain exterior measurement:</b> add one or more measured segments, review the dashed preview, then press <b>Commit Chain</b>. Predefined turns are relative to the prior wall.</div><div class="sketch-toolbar tools-primary"><button class="choice" data-sketch-tool="directional">↔ Exterior Footprint</button><button class="choice" data-sketch-tool="openToBelow">⊟ Open to Below</button><button class="choice" data-sketch-tool="referenceLine">╱ Reference Line</button><button class="choice" data-sketch-tool="freehand">✏️ Freehand</button><button class="choice" data-sketch-tool="label">T Annotation</button><button class="choice" data-sketch-tool="eraser">🧽 Eraser</button><button class="choice" data-sketch-tool="pan">✋ Pan</button></div><section class="directional-panel" id="directionalPanel"><div class="directional-readout" id="directionalReadout">${directionalStatusHtml()}</div><label class="wall-length-label">Wall length<input id="directionalLength" type="text" inputmode="decimal" placeholder="24.5, 24' 6\" or 24-6"></label><div class="input-caption">First wall / absolute direction</div><div class="absolute-pad"><button data-absolute="270">↑</button><button data-absolute="180">←</button><button data-absolute="0">→</button><button data-absolute="90">↓</button></div><div class="input-caption">Turn before next wall</div><div class="turn-grid"><button data-turn="-90">90° Left</button><button data-turn="90">90° Right</button><button data-turn="-45">45° Left</button><button data-turn="45">45° Right</button><button data-turn="-22.5">22.5° Left</button><button data-turn="22.5">22.5° Right</button><button data-turn="0">Continue</button><button id="customTurn">Custom</button></div><div class="live-chain-log" id="liveChainLog">${liveChainHtml()}</div><div class="direction-actions primary-actions"><button class="action secondary" id="undoDirectional">Undo Live Segment</button><button class="action" id="commitDirectional">Commit Chain</button><button class="action secondary" id="cancelDirectional">Cancel Live Chain</button></div><div class="direction-actions"><button class="action secondary" id="closeDirectional">Close Footprint</button><button class="action secondary" id="newDirectional">New Footprint</button></div><label class="tolerance-label">Closure tolerance<select id="closureTolerance"><option value="0.25">0.25 ft</option><option value="0.5">0.50 ft</option><option value="1">1.00 ft</option><option value="2">2.00 ft</option></select></label></section><div class="sketch-toolbar compact"><button class="action secondary" id="undoSketch">↶ Undo Committed</button><button class="action secondary" id="redoSketch">↷ Redo</button><button class="action secondary" id="zoomOutSketch">− Zoom</button><button class="action secondary" id="zoomInSketch">+ Zoom</button><button class="action secondary" id="fitSketch">Fit</button><label class="action secondary">Import Background<input id="sketchBackgroundInput" type="file" accept="image/*" hidden></label><button class="action secondary" id="removeBackground">Remove Background</button><button class="action secondary danger" id="clearSketch">Clear Floor</button></div><div class="sketch-stage" id="sketchStage"><div class="sketch-viewport" id="sketchViewport">${floor.background?`<img class="sketch-background" src="${floor.background}" alt="Imported sketch background">`:''}<canvas id="sketchCanvas"></canvas></div></div><div class="small sketch-status"><span id="sketchToolStatus"></span> • <span id="sketchZoomStatus">Zoom: ${Math.round(s.viewport.scale*100)}%</span> • ${esc(st.name)} / ${esc(floor.name)} • Auto-saved</div>${sketchSummaryHtml()}</div>`;bindSketch();setSketchTool(sketchTool)}
+function liveChainHtml(){const item=activeDirectional(),live=item&&item.liveSegments||[];if(!live.length)return'<span>No live segments. Enter a length and choose a direction or turn.</span>';return`<b>LIVE CHAIN</b>${live.map((seg,i)=>`<span>${i+1}. ${Number(seg.length).toFixed(seg.length%1?2:0)}' • ${esc(seg.label||'')}</span>`).join('')}`}
+function askPositiveNumber(message,def){const raw=prompt(message,String(def));if(raw===null)return null;const n=parseFeet(raw);return Number.isFinite(n)&&n>0?n:null}
+function snapPoint(start,p){const dx=p.x-start.x,dy=p.y-start.y;if(Math.abs(dx)>Math.abs(dy)*1.6)return{x:p.x,y:start.y};if(Math.abs(dy)>Math.abs(dx)*1.6)return{x:start.x,y:p.y};return p}
+function distanceToSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y;if(dx===0&&dy===0)return Math.hypot(p.x-a.x,p.y-a.y);let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+function findSketchItem(p){const items=activeFloor().items||[];let best=-1,dist=22/ensureSketch().viewport.scale;items.forEach((it,i)=>{if(it.kind==='label'){const d=Math.hypot(p.x-it.x,p.y-it.y);if(d<dist){dist=d;best=i}}else if(it.points&&it.points.length){if(it.kind==='measuredArea'||it.kind==='openToBelow'||it.kind==='freeformRect'){const a=it.points[0],b=it.points[1];if(p.x>=Math.min(a.x,b.x)-8&&p.x<=Math.max(a.x,b.x)+8&&p.y>=Math.min(a.y,b.y)-8&&p.y<=Math.max(a.y,b.y)+8)best=i}else{for(let j=1;j<it.points.length;j++){const d=distanceToSegment(p,it.points[j-1],it.points[j]);if(d<dist){dist=d;best=i}}}}});return best}
+function refreshDirectional(){const r=$('#directionalReadout');if(r)r.innerHTML=directionalStatusHtml();const log=$('#liveChainLog');if(log)log.innerHTML=liveChainHtml();drawSketch();updateSketchSummary();save()}
+function startDirectionalAt(p){const f=activeFloor();pushSketchHistory();const item={id:uid('footprint'),kind:'directionalFootprint',points:[p],segments:[],livePoints:[p],liveSegments:[],closed:false,closureTolerance:Number(f.directional.tolerance||1)};f.items.push(item);f.directional.activeId=item.id;refreshDirectional()}
+function addDirectionalByHeading(heading,label){const input=$('#directionalLength'),length=parseFeet(input&&input.value);if(!Number.isFinite(length)||length<=0){alert('Enter a wall length. Accepted examples: 24.5, 24\' 6", or 24-6.');if(input)input.focus();return}let item=activeDirectional();if(!item){const c=$('#sketchCanvas');startDirectionalAt({x:(c?c.width:600)/2,y:(c?c.height:600)/2});item=activeDirectional()}if(item.closed){alert('This footprint is closed. Tap New Footprint to begin another area.');return}if(!item.livePoints||!item.livePoints.length)item.livePoints=[item.points[item.points.length-1]];const a=item.livePoints[item.livePoints.length-1],v=headingVector(heading,length),b={x:a.x+v.x,y:a.y+v.y};item.livePoints.push(b);item.liveSegments.push({length,heading:normalizeHeading(heading),label});if(input){input.value='';input.focus()}refreshDirectional()}
+function addAbsoluteWall(heading){addDirectionalByHeading(Number(heading),({0:'Right',90:'Down',180:'Left',270:'Up'})[Number(heading)]||`${heading}°`)}
+function addTurnWall(turn){const item=activeDirectional(),base=item?currentHeading(item):null;if(base===null){alert('Start the first wall with Up, Down, Left, or Right.');return}const t=Number(turn),h=normalizeHeading(base+t);addDirectionalByHeading(h,t===0?'Continue':`${Math.abs(t)}° ${t<0?'Left':'Right'}`)}
+function addCustomTurn(){const item=activeDirectional(),base=item?currentHeading(item):null;if(base===null){alert('Start the first wall with an absolute direction.');return}const raw=prompt('Turn angle in degrees. Use a negative number for left and a positive number for right:','30');if(raw===null)return;const t=Number(raw);if(!Number.isFinite(t)||Math.abs(t)>180){alert('Enter an angle from -180° to 180°.');return}addDirectionalByHeading(normalizeHeading(base+t),`${Math.abs(t)}° ${t<0?'Left':'Right'}`)}
+function commitDirectional(){const item=activeDirectional();if(!item||!(item.liveSegments||[]).length){alert('There are no live segments to commit.');return}pushSketchHistory();item.points.push(...item.livePoints.slice(1));item.segments.push(...item.liveSegments);item.livePoints=[item.points[item.points.length-1]];item.liveSegments=[];refreshDirectional()}
+function cancelDirectional(){const item=activeDirectional();if(!item||!(item.liveSegments||[]).length)return;item.livePoints=[item.points[item.points.length-1]];item.liveSegments=[];refreshDirectional()}
+function closeDirectional(){const f=activeFloor(),item=activeDirectional();if(!item){alert('Start a footprint first.');return}if((item.liveSegments||[]).length)commitDirectional();if(item.points.length<4){alert('Enter at least three walls before closing the footprint.');return}if(item.closed)return;const a=item.points[item.points.length-1],start=item.points[0],gap=Math.hypot(a.x-start.x,a.y-start.y)/SKETCH_PX_PER_FOOT,tol=Number(f.directional.tolerance||1);let method='within tolerance';if(gap>tol){if(!confirm(`The footprint is ${gap.toFixed(2)} ft from the starting point, outside the ${tol.toFixed(2)} ft tolerance. Close as estimated and store the discrepancy?`))return;method='estimated closure'}pushSketchHistory();item.points.push({...start});item.segments.push({length:gap,heading:null,label:'Estimated closure',closure:true});item.closed=true;item.closureError=gap;item.closureMethod=method;item.livePoints=[item.points[item.points.length-1]];refreshDirectional()}
+function undoDirectional(){const item=activeDirectional();if(!item)return;if((item.liveSegments||[]).length){item.liveSegments.pop();item.livePoints.pop();refreshDirectional();return}alert('No live segment to undo. Use Undo Committed for saved geometry.')}
+function newDirectional(){const current=activeDirectional();if(current&&!current.closed&&((current.segments||[]).length||(current.liveSegments||[]).length)&&!confirm('Start another footprint before closing the current one?'))return;activeFloor().directional.activeId=null;refreshDirectional()}
+function finalizeSketchItem(pointer){const item=pointer.item,floor=activeFloor();if(item.kind==='measuredArea'||item.kind==='openToBelow'){const a=item.points[0],b=item.points[1];if(Math.abs(b.x-a.x)<8||Math.abs(b.y-a.y)<8){floor.items.pop();return}const length=askPositiveNumber(item.kind==='openToBelow'?'Open-to-below length (feet):':'Area length (feet):',20);if(length===null){floor.items.pop();return}const width=askPositiveNumber(item.kind==='openToBelow'?'Open-to-below width (feet):':'Area width (feet):',10);if(width===null){floor.items.pop();return}item.length=length;item.width=width;item.label=item.kind==='openToBelow'?'Open to Below':'Calculated Area'}else if(item.kind==='exteriorWall'){const a=item.points[0],b=item.points[1];if(Math.hypot(b.x-a.x,b.y-a.y)<8){floor.items.pop();return}const length=askPositiveNumber('Exterior wall length (feet):',20);if(length===null){floor.items.pop();return}item.length=length}else if(item.kind==='referenceLine'){const a=item.points[0],b=item.points[1];if(Math.hypot(b.x-a.x,b.y-a.y)<8)floor.items.pop()}}
+function bindSketch(){const s=ensureSketch(),st=activeStructure(),floor=activeFloor(),stage=$('#sketchStage'),canvas=$('#sketchCanvas');if(!stage||!canvas)return;const resize=()=>{const r=stage.getBoundingClientRect();canvas.width=Math.max(1,Math.round(r.width));canvas.height=Math.max(560,Math.round(r.height));drawSketch();applySketchTransform()};resize();window.addEventListener('resize',resize,{once:true});const pos=e=>{const r=stage.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};const local=p=>({x:(p.x-s.viewport.x)/s.viewport.scale,y:(p.y-s.viewport.y)/s.viewport.scale});stage.onpointerdown=e=>{e.preventDefault();stage.setPointerCapture(e.pointerId);const p=pos(e),lp=local(p);if(sketchTool==='directional'){if(!activeDirectional()||activeDirectional().closed)startDirectionalAt(lp);return}if(sketchTool==='label'){const label=prompt('Annotation or room label:','');if(label&&label.trim()){pushSketchHistory();floor.items.push({id:uid('label'),kind:'label',x:lp.x,y:lp.y,text:label.trim()});save();drawSketch()}return}if(sketchTool==='eraser'){const i=findSketchItem(lp);if(i>=0){pushSketchHistory();const removed=floor.items[i];floor.items.splice(i,1);if(floor.directional.activeId===removed.id)floor.directional.activeId=null;save();drawSketch();updateSketchSummary()}return}if(sketchTool==='pan'){sketchPointer={id:e.pointerId,type:'pan',start:p,x:s.viewport.x,y:s.viewport.y};return}pushSketchHistory();if(sketchTool==='freehand'){const item={id:uid('free'),kind:'freehand',points:[lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:'freehand',item}}else if(['measuredArea','openToBelow'].includes(sketchTool)){const item={id:uid('area'),kind:sketchTool,points:[lp,lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:sketchTool,item}}else if(['exteriorWall','referenceLine'].includes(sketchTool)){const item={id:uid('line'),kind:sketchTool,points:[lp,lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:sketchTool,item}}};stage.onpointermove=e=>{if(!sketchPointer||sketchPointer.id!==e.pointerId)return;e.preventDefault();const p=pos(e),lp=local(p);if(sketchPointer.type==='pan'){s.viewport.x=sketchPointer.x+p.x-sketchPointer.start.x;s.viewport.y=sketchPointer.y+p.y-sketchPointer.start.y;applySketchTransform()}else if(sketchPointer.type==='freehand'){sketchPointer.item.points.push(lp);drawSketch()}else{sketchPointer.item.points[1]=sketchPointer.type==='exteriorWall'?snapPoint(sketchPointer.item.points[0],lp):lp;drawSketch()}};const end=e=>{if(!sketchPointer||sketchPointer.id!==e.pointerId)return;const ptr=sketchPointer;sketchPointer=null;if(ptr.type!=='pan')finalizeSketchItem(ptr);save();drawSketch();updateSketchSummary()};stage.onpointerup=end;stage.onpointercancel=end;
+  document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.onclick=()=>setSketchTool(b.dataset.sketchTool));document.querySelectorAll('[data-absolute]').forEach(b=>b.onclick=()=>addAbsoluteWall(b.dataset.absolute));document.querySelectorAll('[data-turn]').forEach(b=>b.onclick=()=>addTurnWall(b.dataset.turn));$('#customTurn').onclick=addCustomTurn;$('#undoDirectional').onclick=undoDirectional;$('#commitDirectional').onclick=commitDirectional;$('#cancelDirectional').onclick=cancelDirectional;$('#closeDirectional').onclick=closeDirectional;$('#newDirectional').onclick=newDirectional;$('#closureTolerance').value=String(floor.directional.tolerance||1);$('#closureTolerance').onchange=e=>{floor.directional.tolerance=Number(e.target.value);save();refreshDirectional()};
+  $('#sketchStructureSelect').onchange=e=>{s.activeStructureId=e.target.value;const ns=activeStructure();s.activeFloorId=ns.activeFloorId||ns.floors[0].id;save();renderSketch()};$('#sketchFloorSelect').onchange=e=>{s.activeFloorId=e.target.value;st.activeFloorId=e.target.value;save();renderSketch()};$('#addStructure').onclick=()=>{const type=prompt('Structure classification:','Detached Garage');if(!type||!type.trim())return;pushSketchHistory();const include=confirm('Include this structure in the main dwelling GLA?\n\nChoose Cancel for garages, patios, detached buildings, and separately reported areas.');const ns=defaultStructure(type.trim(),include);s.structures.push(ns);s.activeStructureId=ns.id;s.activeFloorId=ns.floors[0].id;save();renderSketch()};$('#editStructure').onclick=()=>{const name=prompt('Structure classification / name:',st.name);if(name&&name.trim())st.name=name.trim();st.includeInMainGLA=confirm('Include this structure in main dwelling GLA?\n\nChoose Cancel for excluded or separately reported area.');save();renderSketch()};$('#addFloor').onclick=()=>{const name=prompt('Floor name:',`Floor ${st.floors.length+1}`);if(!name||!name.trim())return;pushSketchHistory();const nf=defaultFloor(name.trim());st.floors.push(nf);s.activeFloorId=nf.id;st.activeFloorId=nf.id;save();renderSketch()};$('#copyFloor').onclick=()=>{const name=prompt('New floor name:',floor.name==='First Floor'?'Second Floor':floor.name+' Copy');if(!name||!name.trim())return;pushSketchHistory();const nf={id:uid('floor'),name:name.trim(),items:JSON.parse(JSON.stringify(floor.items||[])).map(x=>({...x,id:uid('copy'),livePoints:x.points&&[x.points[x.points.length-1]],liveSegments:[]})),background:floor.background||'',directional:{activeId:null,tolerance:floor.directional.tolerance||1}};st.floors.push(nf);s.activeFloorId=nf.id;st.activeFloorId=nf.id;save();renderSketch()};$('#deleteFloor').onclick=()=>{if(st.floors.length===1){alert('A structure must keep at least one floor.');return}if(confirm(`Delete ${floor.name}?`)){pushSketchHistory();st.floors=st.floors.filter(x=>x.id!==floor.id);s.activeFloorId=st.floors[0].id;st.activeFloorId=s.activeFloorId;save();renderSketch()}};$('#undoSketch').onclick=()=>{if(!sketchUndo.length)return;sketchRedo.push(sketchSnapshot());state.sketch=sketchUndo.pop();save();renderSketch()};$('#redoSketch').onclick=()=>{if(!sketchRedo.length)return;sketchUndo.push(sketchSnapshot());state.sketch=sketchRedo.pop();save();renderSketch()};$('#zoomInSketch').onclick=()=>zoomSketch(1.25);$('#zoomOutSketch').onclick=()=>zoomSketch(.8);$('#fitSketch').onclick=fitSketchToItems;$('#clearSketch').onclick=()=>{if(confirm(`Clear all sketch items on ${floor.name}?`)){pushSketchHistory();floor.items=[];floor.directional.activeId=null;save();drawSketch();updateSketchSummary();refreshDirectional()}};$('#removeBackground').onclick=()=>{if(floor.background&&confirm('Remove imported background from this floor?')){floor.background='';save();renderSketch()}};$('#sketchBackgroundInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{floor.background=reader.result;save();renderSketch()};reader.readAsDataURL(f)};applySketchTransform();drawSketch()}
+function updateSketchSummary(){const old=$('.sketch-summary');if(old)old.outerHTML=sketchSummaryHtml()}
+function zoomSketch(mult){const s=ensureSketch(),stage=$('#sketchStage');if(!stage)return;const r=stage.getBoundingClientRect(),cx=r.width/2,cy=r.height/2,old=s.viewport.scale,ns=Math.max(.35,Math.min(4,old*mult)),ratio=ns/old;s.viewport.x=cx-(cx-s.viewport.x)*ratio;s.viewport.y=cy-(cy-s.viewport.y)*ratio;s.viewport.scale=ns;save();applySketchTransform()}
+function fitSketchToItems(){const s=ensureSketch(),stage=$('#sketchStage'),items=activeFloor().items||[];let pts=[];items.forEach(i=>{if(i.points)pts.push(...i.points);if(i.kind==='label')pts.push({x:i.x,y:i.y})});if(!pts.length){s.viewport={scale:1,x:0,y:0};save();applySketchTransform();return}const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),r=stage.getBoundingClientRect(),pad=45,w=Math.max(1,maxX-minX),h=Math.max(1,maxY-minY),scale=Math.max(.35,Math.min(2.5,Math.min((r.width-pad*2)/w,(r.height-pad*2)/h)));s.viewport.scale=scale;s.viewport.x=(r.width-w*scale)/2-minX*scale;s.viewport.y=(r.height-h*scale)/2-minY*scale;save();applySketchTransform()}
+function applySketchTransform(){const s=ensureSketch(),v=$('#sketchViewport'),z=$('#sketchZoomStatus');if(v)v.style.transform=`translate(${s.viewport.x}px,${s.viewport.y}px) scale(${s.viewport.scale})`;if(z)z.textContent=`Zoom: ${Math.round(s.viewport.scale*100)}%`}
+function drawSketch(){const floor=activeFloor(),c=$('#sketchCanvas');if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.lineCap='round';x.lineJoin='round';x.font='bold 15px system-ui';for(const item of floor.items||[]){if(item.kind==='label'){x.fillStyle='#17212b';x.fillText(item.text,item.x,item.y);continue}const pts=item.points||[];if(item.kind==='directionalFootprint'){if(!pts.length)continue;x.save();x.beginPath();x.moveTo(pts[0].x,pts[0].y);for(const p of pts.slice(1))x.lineTo(p.x,p.y);if(item.closed){x.closePath();x.fillStyle='rgba(35,93,140,.10)';x.fill()}x.strokeStyle='#17324d';x.lineWidth=5;x.stroke();(item.segments||[]).forEach((seg,i)=>{const a=pts[i],b=pts[i+1];if(!a||!b)return;const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;x.fillStyle=seg.closure?'#8d5a00':'#17324d';x.font='bold 14px system-ui';x.fillText(`${i+1}. ${Number(seg.length).toFixed(seg.length%1?2:0)}'`,mx+6,my-7)});const livePts=item.livePoints||[];if((item.liveSegments||[]).length&&livePts.length>1){x.beginPath();x.moveTo(livePts[0].x,livePts[0].y);for(const p of livePts.slice(1))x.lineTo(p.x,p.y);x.strokeStyle='#1473e6';x.lineWidth=4;x.setLineDash([10,7]);x.stroke();x.setLineDash([]);(item.liveSegments||[]).forEach((seg,i)=>{const a=livePts[i],b=livePts[i+1],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;x.fillStyle='#1473e6';x.fillText(`LIVE ${Number(seg.length).toFixed(seg.length%1?2:0)}'`,mx+5,my-6)})}const all=effectiveDirectionalPoints(item),last=all[all.length-1];x.fillStyle=item.closed?'#1d7a43':(item.liveSegments||[]).length?'#1473e6':'#d7263d';x.beginPath();x.arc(last.x,last.y,7,0,Math.PI*2);x.fill();if(item.closed){x.fillStyle='#17324d';x.font='bold 16px system-ui';const cx=pts.reduce((a,p)=>a+p.x,0)/pts.length,cy=pts.reduce((a,p)=>a+p.y,0)/pts.length;x.fillText(formatArea(polygonArea(pts)),cx-25,cy)}x.restore();continue}if(pts.length<2)continue;const a=pts[0],b=pts[1];if(item.kind==='measuredArea'||item.kind==='openToBelow'||item.kind==='freeformRect'){const left=Math.min(a.x,b.x),top=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);x.save();if(item.kind==='openToBelow'){x.fillStyle='rgba(180,35,24,.13)';x.strokeStyle='#b42318';x.setLineDash([8,6])}else{x.fillStyle='rgba(35,93,140,.10)';x.strokeStyle='#17324d';x.setLineDash([])}x.lineWidth=3;x.fillRect(left,top,w,h);x.strokeRect(left,top,w,h);x.setLineDash([]);x.fillStyle=item.kind==='openToBelow'?'#8d1b13':'#17324d';const title=item.kind==='openToBelow'?'OPEN TO BELOW':'CALCULATED AREA';const area=Math.abs(itemArea(item));x.fillText(title,left+8,top+20);if(item.length&&item.width){x.font='14px system-ui';x.fillText(`${item.length}' × ${item.width}' = ${formatArea(area)}`,left+8,top+40)}x.restore();continue}x.beginPath();x.moveTo(pts[0].x,pts[0].y);for(const p of pts.slice(1))x.lineTo(p.x,p.y);if(item.kind==='exteriorWall'){x.strokeStyle='#17324d';x.lineWidth=5;x.setLineDash([])}else if(item.kind==='referenceLine'){x.strokeStyle='#687785';x.lineWidth=2;x.setLineDash([7,5])}else{x.strokeStyle='#d7263d';x.lineWidth=3;x.setLineDash([])}x.stroke();x.setLineDash([])}}
 
-  const SCALE = 12;
-  const START = { x: 500, y: 350 };
-  const STORAGE_KEY = 'clipboard-v5-0b-sketch';
-  const AREA_TYPES = ['ANSI GLA','Garage','Covered Patio','Open Patio','Porch','Balcony','Storage','Guest Area','Utility','Other'];
-  const BACKOUT_TYPES = ['Garage','Open to Below','Covered Patio','Open Patio','Porch','Storage','Breezeway','Courtyard','Other'];
-
-  const state = load() || {
-    structures: [{ id: crypto.randomUUID(), name: 'Structure 1', points: [START], walls: [], closed: false, classification: null }],
-    activeStructure: 0,
-    approximateMode: false,
-    backOutMode: false,
-    pendingBackOut: [],
-    backOutAreas: []
-  };
-
-  function parseLength(value) {
-    const v = String(value || '').trim();
-    if (!v) return NaN;
-    const feetInches = v.match(/^\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)?\s*"?\s*$/);
-    if (feetInches) return Number(feetInches[1]) + Number(feetInches[2] || 0) / 12;
-    const mixed = v.match(/^\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*$/);
-    if (mixed) return Number(mixed[1]) + Number(mixed[2]) / 12;
-    return Number(v.replace(/ft|feet|foot/gi, '').trim());
-  }
-
-  function active() { return state.structures[state.activeStructure]; }
-  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
-  function fmt(n) { return Number(n).toFixed(1).replace(/\.0$/, ''); }
-
-  function addWall(direction) {
-    const structure = active();
-    if (structure.closed) return notice('Start a new structure or undo the closure.');
-    const feet = parseLength(lengthInput.value);
-    if (!(feet > 0)) return notice('Enter a valid wall length.');
-    const last = structure.points.at(-1);
-    let dx = 0, dy = 0;
-    if (direction === 'left') dx = -feet * SCALE;
-    if (direction === 'right') dx = feet * SCALE;
-    if (direction === 'up') dy = -feet * SCALE;
-    if (direction === 'down') dy = feet * SCALE;
-    const next = { x: last.x + dx, y: last.y + dy };
-    structure.points.push(next);
-    structure.walls.push({ length: feet, approximate: state.approximateMode });
-    state.approximateMode = false;
-    approxBtn.classList.remove('active-mode');
-    lengthInput.value = '';
-    save();
-    render();
-    lengthInput.focus();
-  }
-
-  function setApproximate() {
-    state.approximateMode = !state.approximateMode;
-    approxBtn.classList.toggle('active-mode', state.approximateMode);
-    modeBadge.textContent = state.approximateMode ? 'Back-Out Later' : 'Sketch';
-  }
-
-  function undo() {
-    const structure = active();
-    if (state.pendingBackOut.length) {
-      state.pendingBackOut.pop();
-    } else if (structure.closed) {
-      structure.closed = false;
-      structure.points.pop();
-      structure.walls.pop();
-    } else if (structure.walls.length) {
-      structure.walls.pop();
-      structure.points.pop();
-    }
-    save(); render();
-  }
-
-  function finishStructure() {
-    const structure = active();
-    if (structure.points.length < 3) return notice('At least three walls are required.');
-    const first = structure.points[0];
-    const last = structure.points.at(-1);
-    const gap = Math.hypot(first.x-last.x, first.y-last.y) / SCALE;
-    if (gap > 0.05) {
-      structure.points.push({ ...first });
-      structure.walls.push({ length: gap, approximate: true, closureWall: true });
-    }
-    structure.closed = true;
-    save(); render();
-    notice(gap <= 0.25 ? 'Structure closed.' : `Closed with ${fmt(gap)} ft backed out. Review the dashed wall.`);
-  }
-
-  function polygonArea(points) {
-    if (points.length < 3) return 0;
-    let sum = 0;
-    for (let i=0;i<points.length-1;i++) sum += points[i].x*points[i+1].y - points[i+1].x*points[i].y;
-    return Math.abs(sum) / 2 / (SCALE*SCALE);
-  }
-
-  function netArea() {
-    const gross = state.structures.reduce((t,s)=>t+(s.closed?polygonArea(s.points):0),0);
-    const deductions = state.backOutAreas.reduce((t,a)=>t+polygonArea([...a.points,a.points[0]]),0);
-    return { gross, deductions, net: Math.max(0,gross-deductions) };
-  }
-
-  function startBackOut() {
-    toolsDialog.close();
-    if (!active().closed) return notice('Finish the main footprint first.');
-    state.backOutMode = true;
-    state.pendingBackOut = [];
-    modeBadge.textContent = 'Back-Out Area';
-    closureText.textContent = 'Tap points around the area. Tap the first point to close.';
-    render();
-  }
-
-  function svgPoint(evt) {
-    const rect = svg.getBoundingClientRect();
-    return { x: (evt.clientX-rect.left)*1000/rect.width, y: (evt.clientY-rect.top)*700/rect.height };
-  }
-
-  function handleCanvasTap(evt) {
-    if (!state.backOutMode) return;
-    const p = svgPoint(evt);
-    if (state.pendingBackOut.length >= 3) {
-      const first = state.pendingBackOut[0];
-      if (Math.hypot(p.x-first.x,p.y-first.y) < 25) {
-        backOutDialog.showModal();
-        return;
-      }
-    }
-    state.pendingBackOut.push(p);
-    render();
-  }
-
-  function completeBackOut(type) {
-    if (state.pendingBackOut.length < 3) return;
-    state.backOutAreas.push({ id: crypto.randomUUID(), type, points: [...state.pendingBackOut] });
-    state.pendingBackOut = [];
-    state.backOutMode = false;
-    backOutDialog.close();
-    modeBadge.textContent = 'Sketch';
-    save(); render();
-  }
-
-  function classifyAreas() {
-    toolsDialog.close();
-    const candidates = state.structures.filter(s=>s.closed);
-    if (!candidates.length) return notice('Finish at least one structure first.');
-    let i = 0;
-    const next = () => {
-      if (i >= candidates.length) { classifyDialog.close(); render(); return; }
-      const s = candidates[i];
-      classifyTitle.textContent = 'What area is this?';
-      classifyAreaText.textContent = `${s.name}: ${fmt(polygonArea(s.points))} sf`;
-      classifyChoices.innerHTML = '';
-      AREA_TYPES.forEach(type => {
-        const b = document.createElement('button');
-        b.type = 'button'; b.textContent = type;
-        b.onclick = () => { s.classification = type; i++; save(); next(); };
-        classifyChoices.appendChild(b);
-      });
-      if (!classifyDialog.open) classifyDialog.showModal();
-    };
-    next();
-  }
-
-  function newStructure() {
-    toolsDialog.close();
-    state.structures.push({ id: crypto.randomUUID(), name:`Structure ${state.structures.length+1}`, points:[{x:500,y:350}], walls:[], closed:false, classification:null });
-    state.activeStructure = state.structures.length-1;
-    save(); render();
-  }
-
-  function resetSketch() {
-    if (!confirm('Reset the entire sketch?')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
-  }
-
-  function render() {
-    svg.innerHTML = '';
-    const ns = 'http://www.w3.org/2000/svg';
-    state.structures.forEach((s, structureIndex) => {
-      if (s.closed && s.points.length>2) {
-        const poly = document.createElementNS(ns,'polygon');
-        poly.setAttribute('points', s.points.map(p=>`${p.x},${p.y}`).join(' '));
-        poly.setAttribute('class','area-fill');
-        svg.appendChild(poly);
-      }
-      for (let i=0;i<s.walls.length;i++) {
-        const a=s.points[i], b=s.points[i+1];
-        const line=document.createElementNS(ns,'line');
-        line.setAttribute('x1',a.x); line.setAttribute('y1',a.y); line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
-        line.setAttribute('class',`wall${s.walls[i].approximate?' approx':''}`);
-        svg.appendChild(line);
-        const label=document.createElementNS(ns,'text');
-        label.setAttribute('x',(a.x+b.x)/2); label.setAttribute('y',(a.y+b.y)/2-10); label.setAttribute('class','measure-label');
-        label.textContent=`${fmt(s.walls[i].length)}'${s.walls[i].approximate?' ~':''}`;
-        svg.appendChild(label);
-      }
-      s.points.forEach((p,idx)=>{
-        if (idx===s.points.length-1 && s.closed) return;
-        const c=document.createElementNS(ns,'circle'); c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r',7); c.setAttribute('class','vertex'); svg.appendChild(c);
-      });
-      if (s.closed) {
-        const pts=s.points.slice(0,-1); const cx=pts.reduce((t,p)=>t+p.x,0)/pts.length; const cy=pts.reduce((t,p)=>t+p.y,0)/pts.length;
-        const txt=document.createElementNS(ns,'text'); txt.setAttribute('x',cx); txt.setAttribute('y',cy); txt.setAttribute('class','area-label');
-        txt.textContent=s.classification||`Area ${structureIndex+1}`; svg.appendChild(txt);
-      }
-    });
-
-    state.backOutAreas.forEach(a=>{
-      const poly=document.createElementNS(ns,'polygon'); poly.setAttribute('points',a.points.map(p=>`${p.x},${p.y}`).join(' ')); poly.setAttribute('class','backout-fill'); svg.appendChild(poly);
-      const cx=a.points.reduce((t,p)=>t+p.x,0)/a.points.length; const cy=a.points.reduce((t,p)=>t+p.y,0)/a.points.length;
-      const txt=document.createElementNS(ns,'text'); txt.setAttribute('x',cx); txt.setAttribute('y',cy); txt.setAttribute('class','area-label'); txt.textContent=a.type; svg.appendChild(txt);
-    });
-
-    if (state.pendingBackOut.length) {
-      const pl=document.createElementNS(ns,'polyline'); pl.setAttribute('points',state.pendingBackOut.map(p=>`${p.x},${p.y}`).join(' ')); pl.setAttribute('class','wall preview'); svg.appendChild(pl);
-      state.pendingBackOut.forEach(p=>{const c=document.createElementNS(ns,'circle'); c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r',8); c.setAttribute('class','vertex'); svg.appendChild(c);});
-    }
-
-    const a=netArea();
-    const current=active();
-    if (state.backOutMode) {
-      modeBadge.textContent='Back-Out Area';
-    } else if (state.approximateMode) {
-      modeBadge.textContent='Back-Out Later';
-    } else {
-      modeBadge.textContent='Sketch';
-    }
-    closureText.textContent = current.closed
-      ? `Gross ${fmt(a.gross)} sf | Back-outs ${fmt(a.deductions)} sf | Net ${fmt(a.net)} sf`
-      : `${current.name}: ${current.walls.length} wall${current.walls.length===1?'':'s'}`;
-  }
-
-  function notice(message) {
-    closureText.textContent = message;
-  }
-
-  document.querySelectorAll('[data-direction]').forEach(b=>b.addEventListener('click',()=>addWall(b.dataset.direction)));
-  approxBtn.addEventListener('click',setApproximate);
-  undoBtn.addEventListener('click',undo);
-  finishBtn.addEventListener('click',finishStructure);
-  toolsBtn.addEventListener('click',()=>toolsDialog.showModal());
-  document.getElementById('newStructureBtn').addEventListener('click',newStructure);
-  document.getElementById('backOutAreaBtn').addEventListener('click',startBackOut);
-  document.getElementById('classifyBtn').addEventListener('click',classifyAreas);
-  document.getElementById('resetBtn').addEventListener('click',resetSketch);
-  document.getElementById('cancelBackOut').addEventListener('click',()=>{state.backOutMode=false;state.pendingBackOut=[];backOutDialog.close();render();});
-  svg.addEventListener('pointerdown',handleCanvasTap);
-  lengthInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();notice('Tap a direction.');}});
-
-  BACKOUT_TYPES.forEach(type=>{const b=document.createElement('button');b.type='button';b.textContent=type;b.onclick=()=>completeBackOut(type);backOutChoices.appendChild(b);});
-  render();
-})();
+function fieldLabel(f){return f['Field Label']||f.Question||f['Field ID']||'Review item'}
+function fieldLocation(f){return f.Tab==='Exit Interview'?'Exit Interview':(f.Tab||'Property')}
+function goToReviewField(tab,id){state.activeTab=tab;buildTabs();render();scrollTo(0,0);setTimeout(()=>{const el=document.querySelector(`.field[data-id="${CSS.escape(id)}"]`);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('review-focus');setTimeout(()=>el.classList.remove('review-focus'),1800)}},80)}
+function reviewItemHtml(item){const cls=item.level==='error'?'review-error':item.level==='warning'?'review-warning':'review-info';const icon=item.level==='error'?'✕':item.level==='warning'?'⚠':'ℹ';return`<button class="review-item ${cls}" data-review-tab="${esc(item.tab)}" data-review-id="${esc(item.id)}"><span class="review-icon">${icon}</span><span class="review-copy"><b>${esc(item.title)}</b><small>${esc(item.reason)}</small><em>${esc(item.tab)}${item.section?' • '+esc(item.section):''}</em></span><span class="review-arrow">›</span></button>`}
+function renderReview(){
+  let visible=CFG.app.filter(f=>truth(f.Visible??'Yes')&&ruleVisible(f['Visibility Rule']));
+  let activeGroups=activeFollowGroups();
+  let followVisible=CFG.followups.filter(f=>activeGroups.has(f['Follow-Up Group'])&&ruleVisible(f['Visibility Rule']));
+  let allVisible=[...visible,...followVisible];
+  let items=[];
+  allVisible.forEach(f=>{let id=f['Field ID'],v=state.values[id],empty=v===undefined||v===''||(Array.isArray(v)&&!v.length);if(truth(f.Required)&&empty)items.push({level:'error',id,title:fieldLabel(f),reason:'Required response is incomplete.',tab:fieldLocation(f),section:f.Section||f['Follow-Up Group']||''})});
+  allVisible.forEach(f=>{let id=f['Field ID'];if(state.flags[id])items.push({level:'warning',id,title:fieldLabel(f),reason:state.notes[id]&&String(state.notes[id]).trim()?`Flagged: ${String(state.notes[id]).trim()}`:'Flagged during the inspection. Open the item to review or clear the flag.',tab:fieldLocation(f),section:f.Section||f['Follow-Up Group']||''})});
+  let notes=Object.values(state.notes).filter(v=>String(v).trim()).length,flags=Object.values(state.flags).filter(Boolean).length,photos=Object.values(state.photos).reduce((a,b)=>a+b.length,0);
+  let errors=items.filter(x=>x.level==='error').length,warnings=items.filter(x=>x.level==='warning').length;
+  $('#screen').innerHTML=`<h2 class="section-title">Inspection Review</h2><div class="review-summary"><div><b>${errors}</b><span>Incomplete</span></div><div><b>${warnings}</b><span>Flagged</span></div><div><b>${notes}</b><span>Notes</span></div><div><b>${photos}</b><span>Photos</span></div></div>${items.length?`<div class="review-heading"><b>Items requiring review</b><span>Tap an item to open it</span></div><div class="review-items">${items.map(reviewItemHtml).join('')}</div>`:'<div class="success review-complete"><b>✓ Inspection review complete</b><br>No required or flagged items are outstanding.</div>'}<div class="review-card"><b>Inspection totals</b><div class="review-line"><span>Bedrooms</span><b>${Number(state.values.bedroom_count||0)}</b></div><div class="review-line"><span>Full bathrooms</span><b>${Number(state.values.full_bath_count||0)}</b></div><div class="review-line"><span>Half bathrooms</span><b>${Number(state.values.half_bath_count||0)}</b></div><div class="review-line"><span>Smoke / CO detectors</span><b>${Number(state.values.smoke_co_count||0)}</b></div></div><div class="review-card"><b>Exit Interview groups</b><div class="small">${[...activeGroups].map(esc).join(' • ')}</div></div><div class="actions"><button class="action" id="exportBtn">Export JSON</button><button class="action secondary" id="resetBtn">Reset Inspection</button></div>`;
+  document.querySelectorAll('[data-review-id]').forEach(b=>b.onclick=()=>goToReviewField(b.dataset.reviewTab,b.dataset.reviewId));
+  $('#exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clipboard-v5-0a-inspection.json';a.click();URL.revokeObjectURL(a.href)};
+  $('#resetBtn').onclick=()=>{if(confirm('Clear this inspection?')){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem('clipboard-v4-4-state');localStorage.removeItem('clipboard-v4-3-2-state');localStorage.removeItem('clipboard-v4-3-state');localStorage.removeItem('clipboard-v4-2-1-state');localStorage.removeItem('clipboard-v4-state');state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};[...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')state.values[f['Field ID']]=f['Default Value']});buildTabs();render();updateCounters()}}}
+init();

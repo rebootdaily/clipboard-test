@@ -38,3 +38,53 @@ dialog::backdrop{background:rgba(5,20,35,.55)}
 .backout-fill{fill:rgba(163,40,40,.14);stroke:var(--danger);stroke-width:3;stroke-dasharray:10 7}
 .area-label{font-size:24px;font-weight:800;fill:var(--navy);text-anchor:middle;paint-order:stroke;stroke:white;stroke-width:6px}
 @media(max-width:600px){.length-row{grid-template-columns:1fr}.choice-grid{grid-template-columns:1fr}.status-row{align-items:flex-start;flex-direction:column}.direction-grid button{min-height:56px}}
+
+.special-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.angle-button {
+  background: #fff7df;
+  border-color: #b7791f;
+  color: #6b3f00;
+  font-weight: 800;
+}
+
+.angle-button.active-mode {
+  background: #f3b33d;
+  border-color: #8a5500;
+  color: #1f1607;
+  box-shadow: 0 0 0 3px rgba(243,179,61,.25);
+}
+
+.help-text {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: #fff7df;
+  color: #5c3a00;
+  font-size: .94rem;
+  font-weight: 650;
+}
+
+.wall.angled {
+  stroke: #a45a00;
+}
+
+.wall.angle-preview {
+  stroke: #e08a00;
+  stroke-width: 6;
+  stroke-dasharray: 14 9;
+}
+
+.angle-preview-label {
+  fill: #7a4300;
+  font-weight: 800;
+}
+
+#sketch {
+  touch-action: none;
+}
