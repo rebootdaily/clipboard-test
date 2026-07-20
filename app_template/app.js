@@ -1,14 +1,14 @@
 let CFG,state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};
-const STORAGE_KEY='clipboard-v4-3-2-state';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const STORAGE_KEY='clipboard-v4-4-state';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function init(){
-  CFG=await fetch('config.json?v=4.3.2',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
+  CFG=await fetch('config.json?v=4.4',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
   const defaults={};
   [...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')defaults[f['Field ID']]=f['Default Value']});
-  const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
+  const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-2-state')||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
   if(saved){try{const parsed=JSON.parse(saved);state={...state,...parsed,values:{...defaults,...(parsed.values||{})},notes:parsed.notes||{},flags:parsed.flags||{},photos:parsed.photos||{},sketch:parsed.sketch||{strokes:[],background:'',viewport:{scale:1,x:0,y:0}}}}catch(e){state.values={...defaults}}}
   else state.values={...defaults};
   $('#brand').textContent=CFG.settings['App Name']||'Clipboard';
-  $('#version').textContent=CFG.settings.Version||'4.3.2';
+  $('#version').textContent=CFG.settings.Version||'4.4';
   buildTabs();render();updateCounters();$('#saveBtn').onclick=save;
 }
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('#saveBtn').textContent='✓';setTimeout(()=>$('#saveBtn').textContent='💾',700)}function optionsFor(ref){if(!ref)return[];if(CFG.lists[ref])return CFG.lists[ref];return String(ref).split(/[,;|]/).map(x=>x.trim()).filter(Boolean)}function truth(v){return['yes','true','1','enabled'].includes(String(v??'').toLowerCase())||v===true}
@@ -58,27 +58,139 @@ function controlHtml(f,val){let type=f['Input Type'],opts=optionsFor(f.Options);
 function wireFields(){document.querySelectorAll('.field').forEach(el=>{let id=el.dataset.id,input=el.querySelector('.value');if(input)input.oninput=()=>{state.values[id]=input.value;save()};let check=el.querySelector('.checkValue');if(check)check.onchange=()=>{state.values[id]=check.checked;changed()};el.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{state.values[id]=b.dataset.choice;changed(true)});el.querySelectorAll('[data-multi]').forEach(b=>b.onclick=()=>{let a=Array.isArray(state.values[id])?[...state.values[id]]:[],x=b.dataset.multi;a.includes(x)?a.splice(a.indexOf(x),1):a.push(x);state.values[id]=a;changed(true)});el.querySelectorAll('[data-delta]').forEach(b=>b.onclick=()=>{state.values[id]=Math.max(0,Number(state.values[id]||0)+Number(b.dataset.delta));changed(true)});el.querySelector('.noteBtn').onclick=()=>{let n=el.querySelector('.note');n.classList.toggle('open');if(n.classList.contains('open')&&state.notes[id]===undefined)state.notes[id]=''};el.querySelector('.noteText').oninput=e=>{state.notes[id]=e.target.value;save()};el.querySelector('.flagBtn').onclick=()=>{state.flags[id]=!state.flags[id];changed(true)};el.querySelectorAll('.photo-input').forEach(inp=>inp.onchange=()=>{state.photos[id]=[...(state.photos[id]||[]),...Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type}))];changed(true)});let os=el.querySelector('.openSketch');if(os)os.onclick=()=>{state.activeTab='Sketch';buildTabs();render();scrollTo(0,0)}})}
 function changed(r=false){clearHiddenValues();updateCounters();save();if(r)render()}function updateCounters(){[['liveBeds','bedroom_count'],['liveFull','full_bath_count'],['liveHalf','half_bath_count'],['liveSmoke','smoke_co_count']].forEach(([a,b])=>$('#'+a).textContent=Number(state.values[b]||0))}
 
-let sketchTool='freehand',sketchUndo=[],sketchRedo=[],sketchPointer=null;
-function ensureSketch(){if(!state.sketch)state.sketch={};state.sketch.strokes=state.sketch.strokes||[];state.sketch.background=state.sketch.background||'';state.sketch.viewport=state.sketch.viewport||{scale:1,x:0,y:0};return state.sketch}
+let sketchTool='measuredArea',sketchUndo=[],sketchRedo=[],sketchPointer=null;
+function uid(prefix='id'){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
+function defaultFloor(name='First Floor'){return{id:uid('floor'),name,items:[],background:''}}
+function defaultStructure(name='Main Dwelling',includeInMainGLA=true){const floor=defaultFloor();return{id:uid('structure'),name,includeInMainGLA,floors:[floor],activeFloorId:floor.id}}
+function ensureSketch(){
+  if(!state.sketch||typeof state.sketch!=='object')state.sketch={};
+  const s=state.sketch;
+  s.viewport=s.viewport||{scale:1,x:0,y:0};
+  if(!Array.isArray(s.structures)||!s.structures.length){
+    const main=defaultStructure();
+    if(Array.isArray(s.strokes)&&s.strokes.length){
+      main.floors[0].items=s.strokes.map(st=>({...st,id:uid('legacy'),kind:st.type==='line'?'referenceLine':st.type==='rect'?'freeformRect':'freeform'}));
+    }
+    main.floors[0].background=s.background||'';
+    s.structures=[main];s.activeStructureId=main.id;s.activeFloorId=main.floors[0].id;
+    delete s.strokes;delete s.background;
+  }
+  let structure=s.structures.find(x=>x.id===s.activeStructureId)||s.structures[0];
+  s.activeStructureId=structure.id;
+  if(!Array.isArray(structure.floors)||!structure.floors.length)structure.floors=[defaultFloor()];
+  let floor=structure.floors.find(x=>x.id===s.activeFloorId)||structure.floors.find(x=>x.id===structure.activeFloorId)||structure.floors[0];
+  s.activeFloorId=floor.id;structure.activeFloorId=floor.id;
+  floor.items=floor.items||[];floor.background=floor.background||'';
+  return s;
+}
+function activeStructure(){const s=ensureSketch();return s.structures.find(x=>x.id===s.activeStructureId)||s.structures[0]}
+function activeFloor(){const s=ensureSketch(),st=activeStructure();return st.floors.find(x=>x.id===s.activeFloorId)||st.floors[0]}
 function sketchSnapshot(){return JSON.parse(JSON.stringify(ensureSketch()))}
-function pushSketchHistory(){sketchUndo.push(sketchSnapshot());if(sketchUndo.length>40)sketchUndo.shift();sketchRedo=[]}
-function setSketchTool(tool){sketchTool=tool;document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.sketchTool===tool));const c=$('#sketchCanvas');if(c)c.style.cursor=tool==='eraser'?'cell':tool==='pan'?'grab':'crosshair';const st=$('#sketchToolStatus');if(st)st.textContent='Tool: '+tool}
-function renderSketch(){const s=ensureSketch();$('#screen').innerHTML=`<h2 class="section-title">Manual Sketch</h2><div class="sketch-card"><div class="sketch-toolbar"><button class="choice" data-sketch-tool="freehand">✏️ Freehand</button><button class="choice" data-sketch-tool="line">📏 Wall</button><button class="choice" data-sketch-tool="rect">▭ Rectangle</button><button class="choice" data-sketch-tool="eraser">🧽 Eraser</button><button class="choice" data-sketch-tool="pan">✋ Pan</button></div><div class="sketch-toolbar"><button class="action secondary" id="undoSketch">↶ Undo</button><button class="action secondary" id="redoSketch">↷ Redo</button><button class="action secondary" id="zoomOutSketch">− Zoom</button><button class="action secondary" id="zoomInSketch">+ Zoom</button><button class="action secondary" id="fitSketch">Fit</button></div><div class="sketch-toolbar"><label class="action secondary">Import Background<input id="sketchBackgroundInput" type="file" accept="image/*" hidden></label><button class="action secondary" id="clearSketch">Clear Drawing</button><button class="action secondary" id="removeBackground">Remove Background</button></div><div class="sketch-stage" id="sketchStage"><div class="sketch-viewport" id="sketchViewport">${s.background?`<img class="sketch-background" id="sketchBackground" src="${s.background}" alt="Imported sketch background">`:''}<canvas id="sketchCanvas"></canvas></div></div><div class="small sketch-status"><span id="sketchToolStatus">Tool: ${sketchTool}</span> • <span id="sketchZoomStatus">Zoom: ${Math.round(s.viewport.scale*100)}%</span> • Auto-saved</div></div>`;bindSketch();setSketchTool(sketchTool)}
-function bindSketch(){const s=ensureSketch(),stage=$('#sketchStage'),canvas=$('#sketchCanvas');if(!stage||!canvas)return;const resize=()=>{const r=stage.getBoundingClientRect();canvas.width=Math.max(1,Math.round(r.width));canvas.height=Math.max(500,Math.round(r.height));drawSketch();applySketchTransform()};resize();window.addEventListener('resize',resize,{once:true});
- const pos=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left),y:(e.clientY-r.top)}};
- const local=p=>({x:(p.x-s.viewport.x)/s.viewport.scale,y:(p.y-s.viewport.y)/s.viewport.scale});
- const nearest=p=>{let best=-1,dist=18/s.viewport.scale;s.strokes.forEach((st,i)=>{(st.points||[]).forEach(q=>{const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<dist){dist=d;best=i}})});return best};
- stage.onpointerdown=e=>{e.preventDefault();stage.setPointerCapture(e.pointerId);const p=pos(e),lp=local(p);if(sketchTool==='freehand'){pushSketchHistory();const stroke={type:'freehand',width:4,points:[lp]};s.strokes.push(stroke);sketchPointer={id:e.pointerId,type:'freehand',stroke}}else if(sketchTool==='line'||sketchTool==='rect'){pushSketchHistory();const stroke={type:sketchTool,width:4,points:[lp,lp]};s.strokes.push(stroke);sketchPointer={id:e.pointerId,type:sketchTool,stroke}}else if(sketchTool==='eraser'){const i=nearest(lp);if(i>=0){pushSketchHistory();s.strokes.splice(i,1);drawSketch();save()}}else if(sketchTool==='pan'){sketchPointer={id:e.pointerId,type:'pan',start:p,x:s.viewport.x,y:s.viewport.y}}};
- stage.onpointermove=e=>{if(!sketchPointer||sketchPointer.id!==e.pointerId)return;e.preventDefault();const p=pos(e),lp=local(p);if(sketchPointer.type==='freehand'){sketchPointer.stroke.points.push(lp);drawSketch()}else if(sketchPointer.type==='line'||sketchPointer.type==='rect'){sketchPointer.stroke.points[1]=lp;drawSketch()}else if(sketchPointer.type==='pan'){s.viewport.x=sketchPointer.x+p.x-sketchPointer.start.x;s.viewport.y=sketchPointer.y+p.y-sketchPointer.start.y;applySketchTransform()}};
- const end=e=>{if(sketchPointer&&sketchPointer.id===e.pointerId){sketchPointer=null;save()}};stage.onpointerup=end;stage.onpointercancel=end;
- document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.onclick=()=>setSketchTool(b.dataset.sketchTool));
- $('#undoSketch').onclick=()=>{if(!sketchUndo.length)return;sketchRedo.push(sketchSnapshot());state.sketch=sketchUndo.pop();save();renderSketch()};$('#redoSketch').onclick=()=>{if(!sketchRedo.length)return;sketchUndo.push(sketchSnapshot());state.sketch=sketchRedo.pop();save();renderSketch()};
- $('#zoomInSketch').onclick=()=>zoomSketch(1.25);$('#zoomOutSketch').onclick=()=>zoomSketch(.8);$('#fitSketch').onclick=()=>{s.viewport={scale:1,x:0,y:0};save();applySketchTransform()};
- $('#clearSketch').onclick=()=>{if(confirm('Clear all manual drawing marks?')){pushSketchHistory();s.strokes=[];save();drawSketch()}};$('#removeBackground').onclick=()=>{if(s.background&&confirm('Remove imported background?')){s.background='';save();renderSketch()}};
- $('#sketchBackgroundInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{s.background=reader.result;save();renderSketch()};reader.readAsDataURL(f)};applySketchTransform();drawSketch()}
-function zoomSketch(mult){const s=ensureSketch(),stage=$('#sketchStage');if(!stage)return;const r=stage.getBoundingClientRect(),cx=r.width/2,cy=r.height/2,old=s.viewport.scale,ns=Math.max(.5,Math.min(4,old*mult)),ratio=ns/old;s.viewport.x=cx-(cx-s.viewport.x)*ratio;s.viewport.y=cy-(cy-s.viewport.y)*ratio;s.viewport.scale=ns;save();applySketchTransform()}
+function pushSketchHistory(){sketchUndo.push(sketchSnapshot());if(sketchUndo.length>50)sketchUndo.shift();sketchRedo=[]}
+function itemArea(item){if(item.kind==='measuredArea')return Math.max(0,Number(item.length)||0)*Math.max(0,Number(item.width)||0);if(item.kind==='openToBelow')return-Math.max(0,Number(item.length)||0)*Math.max(0,Number(item.width)||0);return 0}
+function floorArea(floor){return Math.max(0,(floor.items||[]).reduce((sum,item)=>sum+itemArea(item),0))}
+function structureArea(st){return(st.floors||[]).reduce((sum,f)=>sum+floorArea(f),0)}
+function formatArea(n){return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:1})+' sf'}
+function setSketchTool(tool){
+  sketchTool=tool;
+  document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.sketchTool===tool));
+  const c=$('#sketchCanvas');if(c)c.style.cursor=tool==='eraser'?'cell':tool==='pan'?'grab':tool==='label'?'text':'crosshair';
+  const names={measuredArea:'Calculated Area',openToBelow:'Open to Below / Subtract',exteriorWall:'Exterior Wall',referenceLine:'Freeform Line',freehand:'Freehand',label:'Annotation',eraser:'Eraser',pan:'Pan'};
+  const st=$('#sketchToolStatus');if(st)st.textContent='Tool: '+(names[tool]||tool);
+}
+function sketchSummaryHtml(){
+  const s=ensureSketch();let main=0;
+  const cards=s.structures.map(st=>{const total=structureArea(st);if(st.includeInMainGLA)main+=total;return`<div class="sketch-summary-structure"><b>${esc(st.name)}</b><span>${formatArea(total)}${st.includeInMainGLA?' • Main GLA':' • Separate / excluded from main GLA'}</span>${st.floors.map(f=>`<small>${esc(f.name)}: ${formatArea(floorArea(f))}</small>`).join('')}</div>`}).join('');
+  return`<div class="sketch-summary"><div class="sketch-gla"><span>Main Dwelling GLA</span><b>${formatArea(main)}</b></div>${cards}</div>`;
+}
+function renderSketch(){
+  const s=ensureSketch(),st=activeStructure(),floor=activeFloor();
+  $('#screen').innerHTML=`<h2 class="section-title">Appraisal Sketch</h2>
+  <div class="sketch-card">
+    <div class="sketch-manager">
+      <label>Structure<select id="sketchStructureSelect">${s.structures.map(x=>`<option value="${esc(x.id)}" ${x.id===st.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+      <label>Floor<select id="sketchFloorSelect">${st.floors.map(x=>`<option value="${esc(x.id)}" ${x.id===floor.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+    </div>
+    <div class="sketch-toolbar compact"><button class="action secondary" id="addStructure">+ Structure</button><button class="action secondary" id="editStructure">Edit Structure</button><button class="action secondary" id="addFloor">+ Floor</button><button class="action secondary" id="copyFloor">Copy Floor</button><button class="action secondary danger" id="deleteFloor">Delete Floor</button></div>
+    <div class="sketch-help"><b>Exterior first:</b> use Calculated Area for footprint sections. Use Exterior Wall for measured wall documentation. Freeform lines and annotations never change area.</div>
+    <div class="sketch-toolbar tools-primary"><button class="choice" data-sketch-tool="measuredArea">▭ Calculated Area</button><button class="choice" data-sketch-tool="openToBelow">⊟ Open to Below</button><button class="choice" data-sketch-tool="exteriorWall">📏 Exterior Wall</button><button class="choice" data-sketch-tool="referenceLine">╱ Freeform Line</button><button class="choice" data-sketch-tool="freehand">✏️ Freehand</button><button class="choice" data-sketch-tool="label">T Annotation</button><button class="choice" data-sketch-tool="eraser">🧽 Eraser</button><button class="choice" data-sketch-tool="pan">✋ Pan</button></div>
+    <div class="sketch-toolbar compact"><button class="action secondary" id="undoSketch">↶ Undo</button><button class="action secondary" id="redoSketch">↷ Redo</button><button class="action secondary" id="zoomOutSketch">− Zoom</button><button class="action secondary" id="zoomInSketch">+ Zoom</button><button class="action secondary" id="fitSketch">Fit</button><label class="action secondary">Import Background<input id="sketchBackgroundInput" type="file" accept="image/*" hidden></label><button class="action secondary" id="removeBackground">Remove Background</button><button class="action secondary danger" id="clearSketch">Clear Floor</button></div>
+    <div class="sketch-stage" id="sketchStage"><div class="sketch-viewport" id="sketchViewport">${floor.background?`<img class="sketch-background" src="${floor.background}" alt="Imported sketch background">`:''}<canvas id="sketchCanvas"></canvas></div></div>
+    <div class="small sketch-status"><span id="sketchToolStatus"></span> • <span id="sketchZoomStatus">Zoom: ${Math.round(s.viewport.scale*100)}%</span> • ${esc(st.name)} / ${esc(floor.name)} • Auto-saved</div>
+    ${sketchSummaryHtml()}
+  </div>`;
+  bindSketch();setSketchTool(sketchTool);
+}
+function askPositiveNumber(message,def){const raw=prompt(message,String(def));if(raw===null)return null;const n=Number(String(raw).replace(/[^0-9.\-]/g,''));return Number.isFinite(n)&&n>0?n:null}
+function snapPoint(start,p){const dx=p.x-start.x,dy=p.y-start.y;if(Math.abs(dx)>Math.abs(dy)*1.6)return{x:p.x,y:start.y};if(Math.abs(dy)>Math.abs(dx)*1.6)return{x:start.x,y:p.y};return p}
+function distanceToSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y;if(dx===0&&dy===0)return Math.hypot(p.x-a.x,p.y-a.y);let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+function findSketchItem(p){const items=activeFloor().items||[];let best=-1,dist=22/ensureSketch().viewport.scale;items.forEach((it,i)=>{if(it.kind==='label'){const d=Math.hypot(p.x-it.x,p.y-it.y);if(d<dist){dist=d;best=i}}else if(it.points&&it.points.length){if(it.kind==='measuredArea'||it.kind==='openToBelow'||it.kind==='freeformRect'){const a=it.points[0],b=it.points[1];if(p.x>=Math.min(a.x,b.x)-8&&p.x<=Math.max(a.x,b.x)+8&&p.y>=Math.min(a.y,b.y)-8&&p.y<=Math.max(a.y,b.y)+8)best=i}else{for(let j=1;j<it.points.length;j++){const d=distanceToSegment(p,it.points[j-1],it.points[j]);if(d<dist){dist=d;best=i}}}}});return best}
+function finalizeSketchItem(pointer){
+  const item=pointer.item,floor=activeFloor();
+  if(item.kind==='measuredArea'||item.kind==='openToBelow'){
+    const a=item.points[0],b=item.points[1];if(Math.abs(b.x-a.x)<8||Math.abs(b.y-a.y)<8){floor.items.pop();return}
+    const length=askPositiveNumber(item.kind==='openToBelow'?'Open-to-below length (feet):':'Area length (feet):',20);if(length===null){floor.items.pop();return}
+    const width=askPositiveNumber(item.kind==='openToBelow'?'Open-to-below width (feet):':'Area width (feet):',10);if(width===null){floor.items.pop();return}
+    item.length=length;item.width=width;item.label=item.kind==='openToBelow'?'Open to Below':'Calculated Area';
+  }else if(item.kind==='exteriorWall'){
+    const a=item.points[0],b=item.points[1];if(Math.hypot(b.x-a.x,b.y-a.y)<8){floor.items.pop();return}
+    const length=askPositiveNumber('Exterior wall length (feet):',20);if(length===null){floor.items.pop();return}item.length=length;
+  }else if(item.kind==='referenceLine'){
+    const a=item.points[0],b=item.points[1];if(Math.hypot(b.x-a.x,b.y-a.y)<8)floor.items.pop();
+  }
+}
+function bindSketch(){
+  const s=ensureSketch(),st=activeStructure(),floor=activeFloor(),stage=$('#sketchStage'),canvas=$('#sketchCanvas');if(!stage||!canvas)return;
+  const resize=()=>{const r=stage.getBoundingClientRect();canvas.width=Math.max(1,Math.round(r.width));canvas.height=Math.max(520,Math.round(r.height));drawSketch();applySketchTransform()};resize();window.addEventListener('resize',resize,{once:true});
+  const pos=e=>{const r=stage.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  const local=p=>({x:(p.x-s.viewport.x)/s.viewport.scale,y:(p.y-s.viewport.y)/s.viewport.scale});
+  stage.onpointerdown=e=>{
+    e.preventDefault();stage.setPointerCapture(e.pointerId);const p=pos(e),lp=local(p);
+    if(sketchTool==='label'){const label=prompt('Annotation or room label:','');if(label&&label.trim()){pushSketchHistory();floor.items.push({id:uid('label'),kind:'label',x:lp.x,y:lp.y,text:label.trim()});save();drawSketch()}return}
+    if(sketchTool==='eraser'){const i=findSketchItem(lp);if(i>=0){pushSketchHistory();floor.items.splice(i,1);save();drawSketch();updateSketchSummary()}return}
+    if(sketchTool==='pan'){sketchPointer={id:e.pointerId,type:'pan',start:p,x:s.viewport.x,y:s.viewport.y};return}
+    pushSketchHistory();
+    if(sketchTool==='freehand'){const item={id:uid('free'),kind:'freehand',points:[lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:'freehand',item}}
+    else if(['measuredArea','openToBelow'].includes(sketchTool)){const item={id:uid('area'),kind:sketchTool,points:[lp,lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:sketchTool,item}}
+    else if(['exteriorWall','referenceLine'].includes(sketchTool)){const item={id:uid('line'),kind:sketchTool,points:[lp,lp]};floor.items.push(item);sketchPointer={id:e.pointerId,type:sketchTool,item}}
+  };
+  stage.onpointermove=e=>{if(!sketchPointer||sketchPointer.id!==e.pointerId)return;e.preventDefault();const p=pos(e),lp=local(p);if(sketchPointer.type==='pan'){s.viewport.x=sketchPointer.x+p.x-sketchPointer.start.x;s.viewport.y=sketchPointer.y+p.y-sketchPointer.start.y;applySketchTransform()}else if(sketchPointer.type==='freehand'){sketchPointer.item.points.push(lp);drawSketch()}else{sketchPointer.item.points[1]=sketchPointer.type==='exteriorWall'?snapPoint(sketchPointer.item.points[0],lp):lp;drawSketch()}};
+  const end=e=>{if(!sketchPointer||sketchPointer.id!==e.pointerId)return;const ptr=sketchPointer;sketchPointer=null;if(ptr.type!=='pan')finalizeSketchItem(ptr);save();drawSketch();updateSketchSummary()};stage.onpointerup=end;stage.onpointercancel=end;
+  document.querySelectorAll('[data-sketch-tool]').forEach(b=>b.onclick=()=>setSketchTool(b.dataset.sketchTool));
+  $('#sketchStructureSelect').onchange=e=>{s.activeStructureId=e.target.value;const ns=activeStructure();s.activeFloorId=ns.activeFloorId||ns.floors[0].id;save();renderSketch()};
+  $('#sketchFloorSelect').onchange=e=>{s.activeFloorId=e.target.value;st.activeFloorId=e.target.value;save();renderSketch()};
+  $('#addStructure').onclick=()=>{const name=prompt('Structure name:','Detached Garage');if(!name||!name.trim())return;pushSketchHistory();const include=confirm('Include this structure in the main dwelling GLA?\n\nChoose Cancel for detached/outbuilding areas.');const ns=defaultStructure(name.trim(),include);s.structures.push(ns);s.activeStructureId=ns.id;s.activeFloorId=ns.floors[0].id;save();renderSketch()};
+  $('#editStructure').onclick=()=>{const name=prompt('Structure name:',st.name);if(name&&name.trim())st.name=name.trim();st.includeInMainGLA=confirm('Include this structure in main dwelling GLA?\n\nChoose Cancel for an outbuilding or separately reported area.');save();renderSketch()};
+  $('#addFloor').onclick=()=>{const name=prompt('Floor name:',`Floor ${st.floors.length+1}`);if(!name||!name.trim())return;pushSketchHistory();const nf=defaultFloor(name.trim());st.floors.push(nf);s.activeFloorId=nf.id;st.activeFloorId=nf.id;save();renderSketch()};
+  $('#copyFloor').onclick=()=>{const name=prompt('New floor name:',floor.name==='First Floor'?'Second Floor':floor.name+' Copy');if(!name||!name.trim())return;pushSketchHistory();const nf={id:uid('floor'),name:name.trim(),items:JSON.parse(JSON.stringify(floor.items||[])).map(x=>({...x,id:uid('copy')})),background:floor.background||''};st.floors.push(nf);s.activeFloorId=nf.id;st.activeFloorId=nf.id;save();renderSketch()};
+  $('#deleteFloor').onclick=()=>{if(st.floors.length===1){alert('A structure must keep at least one floor.');return}if(confirm(`Delete ${floor.name}?`)){pushSketchHistory();st.floors=st.floors.filter(x=>x.id!==floor.id);s.activeFloorId=st.floors[0].id;st.activeFloorId=s.activeFloorId;save();renderSketch()}};
+  $('#undoSketch').onclick=()=>{if(!sketchUndo.length)return;sketchRedo.push(sketchSnapshot());state.sketch=sketchUndo.pop();save();renderSketch()};
+  $('#redoSketch').onclick=()=>{if(!sketchRedo.length)return;sketchUndo.push(sketchSnapshot());state.sketch=sketchRedo.pop();save();renderSketch()};
+  $('#zoomInSketch').onclick=()=>zoomSketch(1.25);$('#zoomOutSketch').onclick=()=>zoomSketch(.8);$('#fitSketch').onclick=()=>{s.viewport={scale:1,x:0,y:0};save();applySketchTransform()};
+  $('#clearSketch').onclick=()=>{if(confirm(`Clear all sketch items on ${floor.name}?`)){pushSketchHistory();floor.items=[];save();drawSketch();updateSketchSummary()}};
+  $('#removeBackground').onclick=()=>{if(floor.background&&confirm('Remove imported background from this floor?')){floor.background='';save();renderSketch()}};
+  $('#sketchBackgroundInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{floor.background=reader.result;save();renderSketch()};reader.readAsDataURL(f)};
+  applySketchTransform();drawSketch();
+}
+function updateSketchSummary(){const old=$('.sketch-summary');if(old)old.outerHTML=sketchSummaryHtml()}
+function zoomSketch(mult){const s=ensureSketch(),stage=$('#sketchStage');if(!stage)return;const r=stage.getBoundingClientRect(),cx=r.width/2,cy=r.height/2,old=s.viewport.scale,ns=Math.max(.45,Math.min(4,old*mult)),ratio=ns/old;s.viewport.x=cx-(cx-s.viewport.x)*ratio;s.viewport.y=cy-(cy-s.viewport.y)*ratio;s.viewport.scale=ns;save();applySketchTransform()}
 function applySketchTransform(){const s=ensureSketch(),v=$('#sketchViewport'),z=$('#sketchZoomStatus');if(v)v.style.transform=`translate(${s.viewport.x}px,${s.viewport.y}px) scale(${s.viewport.scale})`;if(z)z.textContent=`Zoom: ${Math.round(s.viewport.scale*100)}%`}
-function drawSketch(){const s=ensureSketch(),c=$('#sketchCanvas');if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.strokeStyle='#d7263d';x.lineCap='round';x.lineJoin='round';for(const st of s.strokes){const pts=st.points||[];if(pts.length<2)continue;x.lineWidth=st.width||4;x.beginPath();if(st.type==='rect'){const a=pts[0],b=pts[1];x.rect(a.x,a.y,b.x-a.x,b.y-a.y)}else{x.moveTo(pts[0].x,pts[0].y);for(const p of pts.slice(1))x.lineTo(p.x,p.y)}x.stroke()}}
+function drawSketch(){
+  const floor=activeFloor(),c=$('#sketchCanvas');if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.lineCap='round';x.lineJoin='round';x.font='bold 15px system-ui';
+  for(const item of floor.items||[]){
+    if(item.kind==='label'){x.fillStyle='#17212b';x.fillText(item.text,item.x,item.y);continue}
+    const pts=item.points||[];if(pts.length<2)continue;const a=pts[0],b=pts[1];
+    if(item.kind==='measuredArea'||item.kind==='openToBelow'||item.kind==='freeformRect'){
+      const left=Math.min(a.x,b.x),top=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);x.save();
+      if(item.kind==='openToBelow'){x.fillStyle='rgba(180,35,24,.13)';x.strokeStyle='#b42318';x.setLineDash([8,6])}else{x.fillStyle='rgba(35,93,140,.10)';x.strokeStyle='#17324d';x.setLineDash([])}
+      x.lineWidth=3;x.fillRect(left,top,w,h);x.strokeRect(left,top,w,h);x.setLineDash([]);x.fillStyle=item.kind==='openToBelow'?'#8d1b13':'#17324d';
+      const title=item.kind==='openToBelow'?'OPEN TO BELOW':'CALCULATED AREA';const area=Math.abs(itemArea(item));x.fillText(title,left+8,top+20);if(item.length&&item.width){x.font='14px system-ui';x.fillText(`${item.length}' × ${item.width}' = ${formatArea(area)}`,left+8,top+40)}x.restore();continue
+    }
+    x.beginPath();x.moveTo(pts[0].x,pts[0].y);for(const p of pts.slice(1))x.lineTo(p.x,p.y);
+    if(item.kind==='exteriorWall'){x.strokeStyle='#17324d';x.lineWidth=5;x.setLineDash([])}else if(item.kind==='referenceLine'){x.strokeStyle='#687785';x.lineWidth=2;x.setLineDash([7,5])}else{x.strokeStyle='#d7263d';x.lineWidth=3;x.setLineDash([])}x.stroke();x.setLineDash([]);
+    if(item.kind==='exteriorWall'&&item.length){const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;x.fillStyle='#17324d';x.font='bold 14px system-ui';x.fillText(`${item.length}'`,mx+5,my-6)}
+  }
+}
 
 function fieldLabel(f){return f['Field Label']||f.Question||f['Field ID']||'Review item'}
 function fieldLocation(f){return f.Tab==='Exit Interview'?'Exit Interview':(f.Tab||'Property')}
@@ -96,6 +208,6 @@ function renderReview(){
   let errors=items.filter(x=>x.level==='error').length,warnings=items.filter(x=>x.level==='warning').length;
   $('#screen').innerHTML=`<h2 class="section-title">Inspection Review</h2><div class="review-summary"><div><b>${errors}</b><span>Incomplete</span></div><div><b>${warnings}</b><span>Flagged</span></div><div><b>${notes}</b><span>Notes</span></div><div><b>${photos}</b><span>Photos</span></div></div>${items.length?`<div class="review-heading"><b>Items requiring review</b><span>Tap an item to open it</span></div><div class="review-items">${items.map(reviewItemHtml).join('')}</div>`:'<div class="success review-complete"><b>✓ Inspection review complete</b><br>No required or flagged items are outstanding.</div>'}<div class="review-card"><b>Inspection totals</b><div class="review-line"><span>Bedrooms</span><b>${Number(state.values.bedroom_count||0)}</b></div><div class="review-line"><span>Full bathrooms</span><b>${Number(state.values.full_bath_count||0)}</b></div><div class="review-line"><span>Half bathrooms</span><b>${Number(state.values.half_bath_count||0)}</b></div><div class="review-line"><span>Smoke / CO detectors</span><b>${Number(state.values.smoke_co_count||0)}</b></div></div><div class="review-card"><b>Exit Interview groups</b><div class="small">${[...activeGroups].map(esc).join(' • ')}</div></div><div class="actions"><button class="action" id="exportBtn">Export JSON</button><button class="action secondary" id="resetBtn">Reset Inspection</button></div>`;
   document.querySelectorAll('[data-review-id]').forEach(b=>b.onclick=()=>goToReviewField(b.dataset.reviewTab,b.dataset.reviewId));
-  $('#exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clipboard-v4-3-2-inspection.json';a.click();URL.revokeObjectURL(a.href)};
-  $('#resetBtn').onclick=()=>{if(confirm('Clear this inspection?')){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem('clipboard-v4-3-state');localStorage.removeItem('clipboard-v4-2-1-state');localStorage.removeItem('clipboard-v4-state');state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};[...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')state.values[f['Field ID']]=f['Default Value']});buildTabs();render();updateCounters()}}}
+  $('#exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clipboard-v4-4-inspection.json';a.click();URL.revokeObjectURL(a.href)};
+  $('#resetBtn').onclick=()=>{if(confirm('Clear this inspection?')){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem('clipboard-v4-3-2-state');localStorage.removeItem('clipboard-v4-3-state');localStorage.removeItem('clipboard-v4-2-1-state');localStorage.removeItem('clipboard-v4-state');state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};[...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')state.values[f['Field ID']]=f['Default Value']});buildTabs();render();updateCounters()}}}
 init();
