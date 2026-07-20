@@ -1,20 +1,11 @@
-Clipboard v5.0c Source Fix
+Clipboard v6.4 Smart Sketch Beta
 
-1. Stop the localhost server.
-2. Copy the contents of this update into the root of your existing clipboard-test folder.
-3. Choose Replace when Windows asks.
-4. Do not delete or replace the existing .git folder.
-5. Run Start_Clipboard_v4.bat again.
-6. In Edge, press Ctrl+F5 once.
+1. Stop the Clipboard local server.
+2. Extract this ZIP.
+3. Copy its contents into the existing clipboard-test folder.
+4. Preserve the existing .git folder.
+5. Replace files when prompted.
+6. Run Start_Clipboard_v4.bat.
+7. Refresh Edge with Ctrl + F5.
 
-Expected result:
-- Header/version shows 5.0c.
-- Sketch workspace shows "5.0c Angle Tool".
-- A new orange "Angle" button appears beside Exterior Footprint.
-
-Angle workflow:
-1. Enter the exact wall length.
-2. Tap Angle.
-3. Drag on the sketch in the intended direction.
-4. Release to add the wall.
-5. Direction snaps to 22.5-degree increments; length remains exact.
+The Sketch page should display 6.4 Smart Sketch Beta.
