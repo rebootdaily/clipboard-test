@@ -132,8 +132,8 @@ def build_config(s):
         if len(r) >= 2 and str(r[0]).strip():
             settings[str(r[0]).strip()] = r[1]
 
-    settings['Version'] = '6.4'
-    settings['Workbook Role'] = 'Live master configuration for Clipboard v6.4'
+    settings['Version'] = '7.0'
+    settings['Workbook Role'] = 'Live master configuration for Clipboard v7.0'
 
     nav = []
     for r in s.get("Navigation", [])[1:]:
