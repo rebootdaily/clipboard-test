@@ -229,7 +229,33 @@ def publish_build_to_root():
     return published
 
 
+def print_banner():
+    print("-" * 50)
+    print("Clipboard Generator")
+    print()
+    print("Workbook Source:")
+    print(WORKBOOK.name)
+    print()
+    print("Application Source:")
+    print(f"{TEMPLATE.name}/")
+    print()
+    print("Generated Output:")
+    print("root/")
+    print(f"{BUILD.name}/")
+    print()
+    print("WARNING")
+    print()
+    print("Generated files are build artifacts.")
+    print()
+    print("Do not edit generated files.")
+    print()
+    print("Always edit app_template for application code.")
+    print("-" * 50)
+
+
 def main():
+    print_banner()
+
     try:
         if not WORKBOOK.exists():
             raise FileNotFoundError(f"Workbook not found: {WORKBOOK}")
