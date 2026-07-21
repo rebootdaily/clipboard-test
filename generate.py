@@ -10,6 +10,48 @@ ROOT = Path(__file__).resolve().parent
 WORKBOOK = ROOT / "Clipboard_v4_Master_Base.xlsx"
 BUILD = ROOT / "clipboard_generated"
 TEMPLATE = ROOT / "app_template"
+VERSION_FILE = ROOT / "VERSION"
+VERSION_TOKEN = "__APP_VERSION__"
+
+
+def read_version():
+    """The single source of truth for the app's version badge everywhere.
+
+    Bump VERSION and re-run generate.py: every __APP_VERSION__ token in the
+    generated app_template/ copies, plus config.json's Settings.Version, is
+    stamped with it automatically. app_template/ itself keeps the literal
+    token, never a stamped value, so it never goes stale between releases.
+    """
+    if not VERSION_FILE.exists():
+        raise FileNotFoundError(f"VERSION file not found: {VERSION_FILE}")
+
+    version = VERSION_FILE.read_text(encoding="utf-8").strip()
+    if not version:
+        raise ValueError(f"VERSION file is empty: {VERSION_FILE}")
+
+    return version
+
+
+def stamp_version(directory, version):
+    """Replace VERSION_TOKEN with the real version in every text file under
+    directory. Only ever called on clipboard_generated/ (a generated
+    artifact) -- app_template/ is never touched."""
+    stamped = []
+
+    for path in directory.rglob("*"):
+        if not path.is_file():
+            continue
+
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, ValueError):
+            continue
+
+        if VERSION_TOKEN in text:
+            path.write_text(text.replace(VERSION_TOKEN, version), encoding="utf-8")
+            stamped.append(str(path.relative_to(directory)))
+
+    return stamped
 
 NS = {
     "m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
@@ -164,7 +206,7 @@ def records(rows):
     return out
 
 
-def build_config(s):
+def build_config(s, version):
     app = records(s.get("APP DESIGN", []))
     followups = records(s.get("FOLLOW-UP TEMPLATES", []))
 
@@ -186,8 +228,8 @@ def build_config(s):
         if len(r) >= 2 and str(r[0]).strip():
             settings[str(r[0]).strip()] = r[1]
 
-    settings['Version'] = '7.0'
-    settings['Workbook Role'] = 'Live master configuration for Clipboard v7.0'
+    settings['Version'] = version
+    settings['Workbook Role'] = f'Live master configuration for Clipboard v{version}'
 
     nav = []
     for r in s.get("Navigation", [])[1:]:
@@ -335,10 +377,13 @@ def main():
             (ROOT / "VALIDATION.txt").write_text(message + "\n", encoding="utf-8")
             return 1
 
-        cfg = build_config(sheets)
+        version = read_version()
+
+        cfg = build_config(sheets, version)
         issues = validate(cfg)
 
         copied = copy_template_to_build()
+        stamped = stamp_version(BUILD, version)
 
         (BUILD / "config.json").write_text(
             json.dumps(cfg, indent=2, ensure_ascii=False),
@@ -350,6 +395,7 @@ def main():
         report = [
             "Clipboard v4 workbook validation",
             f"Workbook: {WORKBOOK.name}",
+            f"Version: {version}",
             f"APP DESIGN fields: {len(cfg['app'])}",
             f"Follow-up questions: {len(cfg['followups'])}",
             f"Lists: {len(cfg['lists'])}",
@@ -364,6 +410,7 @@ def main():
 
         print("\n".join(report))
         print(f"Template files copied: {', '.join(copied)}")
+        print(f"Version badge stamped ({version}) into: {', '.join(stamped) or '(none)'}")
         print(f"Generated: {BUILD}")
         print("Published to repository root:")
         for name in published:

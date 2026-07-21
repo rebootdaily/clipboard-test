@@ -1,6 +1,6 @@
 {
-  "name": "Clipboard v7.1.1",
-  "short_name": "Clipboard 7.1.1",
+  "name": "Clipboard v__APP_VERSION__",
+  "short_name": "Clipboard __APP_VERSION__",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#eef2f5",
