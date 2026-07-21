@@ -185,7 +185,10 @@ workbook cannot change the Sketch engine's behavior.
   stale relative to root/`clipboard_generated/` — whatever is currently in
   `app_template/` becomes the new root and `clipboard_generated/` content.
 
-## 9. Files that should never be edited directly
+## 9. Safe editing workflow
+
+**Never edit these directly** — the next `generate.py` run silently
+overwrites them:
 
 - `config.json` (root and `clipboard_generated/`)
 - Everything under `clipboard_generated/`
@@ -205,3 +208,21 @@ Then either run `generate.py` (requires the workbook present) to copy
 `config.json`, or — if the workbook isn't being touched — mirror the
 changed `app_template/` file(s) into `clipboard_generated/` and root by
 hand, as was done for the v7.1.1 fix.
+
+**The workflow, step by step:**
+
+1. Decide which source you're changing: the workbook (form content) or
+   `app_template/` (application code, including the Sketch engine). Never
+   both files of a pair (e.g. `app_template/app.js` and root `app.js`) —
+   pick the `app_template/` one and let the tooling/copy step propagate it.
+2. Make the edit only in the source file.
+3. Run `py -3 generate.py` (or `Start_Clipboard_v4.bat`) to regenerate
+   `config.json` and republish `app_template/` through to
+   `clipboard_generated/` and root — or, if only testing without the
+   workbook available, copy the changed `app_template/` file(s) to
+   `clipboard_generated/` and root by hand.
+4. Confirm the three copies of each touched file (`app_template/`,
+   `clipboard_generated/`, root) are identical again (`diff`) before
+   committing.
+5. Review `git status`/`git diff` — `generate.py` has no git awareness and
+   will overwrite root/`clipboard_generated/` unconditionally.
