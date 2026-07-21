@@ -21,4 +21,16 @@
 .fs-stage{position:relative;height:64vh;min-height:520px;max-width:100%;border:3px solid #9eabb6;border-radius:12px;background:#fff;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .fs-stage canvas{display:block;width:100%;height:100%;max-width:100%;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
 @media(max-width:700px){.fs-toolbar{grid-template-columns:repeat(3,1fr)}.fs-toolbar button{min-height:66px}.fs-stage{height:60vh;min-height:500px}.fs-page-row{grid-template-columns:1fr auto auto}}
-</style></head><body><header><div class="topline"><div><span class="brand" id="brand">Clipboard</span> <span class="version" id="version"></span></div><button class="iconbtn" id="saveBtn" title="Save">💾</button></div><div class="counterbar" id="counterbar" hidden><div class="counterchip">Beds<b id="liveBeds">0</b></div><div class="counterchip">Full Baths<b id="liveFull">0</b></div><div class="counterchip">Half Baths<b id="liveHalf">0</b></div><div class="counterchip">Smoke/CO<b id="liveSmoke">0</b></div></div></header><main><div id="screen"></div></main><nav class="tabs" id="tabs"></nav><script src="app.js?v=__APP_VERSION__"></script></body></html>
+</style></head><body><header><div class="topline"><div><span class="brand" id="brand">Clipboard</span> <span class="version" id="version"></span></div><button class="iconbtn" id="saveBtn" title="Save">💾</button></div><div class="counterbar" id="counterbar" hidden><div class="counterchip">Beds<b id="liveBeds">0</b></div><div class="counterchip">Full Baths<b id="liveFull">0</b></div><div class="counterchip">Half Baths<b id="liveHalf">0</b></div><div class="counterchip">Smoke/CO<b id="liveSmoke">0</b></div></div></header><main><div id="screen"></div></main><nav class="tabs" id="tabs"></nav><script src="app.js?v=__APP_VERSION__"></script><script>
+if('serviceWorker' in navigator){
+  var hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(hadController)location.reload();
+  });
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+      reg.update();
+    }).catch(function(){});
+  });
+}
+</script></body></html>

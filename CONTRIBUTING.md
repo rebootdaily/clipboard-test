@@ -18,7 +18,13 @@ and [ROADMAP.md](ROADMAP.md) — this document is the practical how-to.
 - **Generated files** are build artifacts, produced fresh by `generate.py`
   every run: `config.json`, everything under `clipboard_generated/`, and
   the published root copies of `app.js`/`index.html`/`manifest.json`/
-  `styles.css`, plus `VALIDATION.txt`. None of these should be hand-edited.
+  `sw.js`/`styles.css`, plus `VALIDATION.txt`. None of these should be
+  hand-edited.
+- **`VERSION`** (repo root, a single line like `7.1.1`) is the source of
+  truth for the version badge shown everywhere — header, page title,
+  manifest, Sketch tab chip, and the service worker's cache name. Bump it
+  by hand for each release; `generate.py` stamps it into every
+  `__APP_VERSION__` token automatically.
 
 Full details, including exactly how the Sketch engine is kept decoupled
 from the workbook, live in [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -30,14 +36,15 @@ from the workbook, live in [ARCHITECTURE.md](ARCHITECTURE.md).
 | To change... | Edit... |
 |---|---|
 | Inspection form fields, options, visibility rules, tab order | `Clipboard_v4_Master_Base.xlsx` |
-| Anything in the app shell, styling, or the Sketch engine | `app_template/app.js`, `app_template/index.html`, `app_template/manifest.json`, `app_template/styles.css` |
+| The version badge / release number | `VERSION` |
+| Anything in the app shell, styling, the Sketch engine, or offline caching | `app_template/app.js`, `app_template/index.html`, `app_template/manifest.json`, `app_template/sw.js`, `app_template/styles.css` |
 | The build/generator itself | `generate.py` |
 
 ### Which files to never edit directly
 
 - `config.json` (root and `clipboard_generated/`)
 - Anything under `clipboard_generated/`
-- Root-level `app.js`, `index.html`, `manifest.json`, `styles.css`
+- Root-level `app.js`, `index.html`, `manifest.json`, `sw.js`, `styles.css`
 - `VALIDATION.txt`
 
 Any of these will be silently overwritten the next time `generate.py` runs.
@@ -93,6 +100,13 @@ scroll/zoom behavior.
    current one): continuous Pencil/finger drawing to `pointerup`,
    two-finger pan, pinch-zoom, object select/move/resize, text edit and
    reload-persistence.
+
+**Service worker caveat**: step 2 above (LAN IP over plain HTTP) will
+**not** register the service worker (`sw.js`) — service workers require a
+secure context (HTTPS, or `http://localhost`), and a LAN IP is neither.
+Cache-versioning/offline behavior specifically can only be verified via
+`http://localhost` on the same machine, or against the real HTTPS GitHub
+Pages URL. See [ARCHITECTURE.md](ARCHITECTURE.md) §8.
 
 ### Git branch workflow
 

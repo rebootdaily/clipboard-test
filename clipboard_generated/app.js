@@ -2,7 +2,7 @@ let pendingCutout=null;
 let CFG,state={values:{},notes:{},flags:{},photos:{},sketch:{strokes:[],background:'',viewport:{scale:1,x:0,y:0}},activeTab:'Property'};
 const STORAGE_KEY='clipboard-v6-0-state';const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function init(){
-  CFG=await fetch('config.json?v=6.0',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
+  CFG=await fetch('config.json?v=7.1.1',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
   const defaults={};
   [...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')defaults[f['Field ID']]=f['Default Value']});
   const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-2-state')||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
