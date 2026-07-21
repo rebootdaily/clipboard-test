@@ -74,6 +74,60 @@ def read_workbook(path):
         return sheets
 
 
+REQUIRED_SHEETS = [
+    "APP DESIGN",
+    "FOLLOW-UP TEMPLATES",
+    "Lists",
+    "Settings",
+    "Navigation",
+]
+
+REQUIRED_COLUMNS = {
+    "APP DESIGN": ["Field ID", "Tab", "Input Type"],
+    "FOLLOW-UP TEMPLATES": ["Field ID", "Follow-Up Group", "Input Type"],
+    "Settings": ["Setting", "Value"],
+    "Navigation": ["Order", "Tab"],
+}
+
+REQUIRED_DATA_ROWS = ["APP DESIGN", "Navigation"]
+
+
+def validate_workbook_structure(sheets):
+    """Structural checks on the raw workbook, before any config is built.
+
+    Anything appended here is fatal: it means generation stops and no
+    file (config.json, clipboard_generated/, or the published root) is
+    touched, rather than silently producing a broken application.
+    """
+    errors = []
+
+    for name in REQUIRED_SHEETS:
+        rows = sheets.get(name)
+
+        if rows is None:
+            errors.append(f"Missing required worksheet: '{name}'")
+            continue
+
+        if not rows:
+            errors.append(f"Worksheet '{name}' has no header row")
+            continue
+
+        headers = {str(x).strip() for x in rows[0]}
+        missing = [c for c in REQUIRED_COLUMNS.get(name, []) if c not in headers]
+        if missing:
+            errors.append(
+                f"Worksheet '{name}' is missing required column(s): "
+                + ", ".join(missing)
+            )
+
+        if name in REQUIRED_DATA_ROWS and len(rows) < 2:
+            errors.append(
+                f"Worksheet '{name}' has a header row but no data rows"
+            )
+
+    return errors
+
+
 def records(rows):
     if not rows:
         return []
@@ -261,6 +315,26 @@ def main():
             raise FileNotFoundError(f"Workbook not found: {WORKBOOK}")
 
         sheets = read_workbook(WORKBOOK)
+
+        structure_errors = validate_workbook_structure(sheets)
+        if structure_errors:
+            message = "\n".join(
+                [
+                    "Workbook structure validation FAILED.",
+                    "Generation stopped before any file was written or overwritten.",
+                    "",
+                ]
+                + [f"- {e}" for e in structure_errors]
+                + [
+                    "",
+                    "Fix the worksheet(s)/column(s) above in "
+                    f"{WORKBOOK.name} and re-run generate.py.",
+                ]
+            )
+            print(message)
+            (ROOT / "VALIDATION.txt").write_text(message + "\n", encoding="utf-8")
+            return 1
+
         cfg = build_config(sheets)
         issues = validate(cfg)
 
