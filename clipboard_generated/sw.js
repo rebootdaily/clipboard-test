@@ -1,6 +1,6 @@
 // Clipboard service worker -- automatic cache versioning.
 //
-// The cache name embeds the app's version (7.1.1, stamped by
+// The cache name embeds the app's version (8.0.0, stamped by
 // generate.py from the repo-root VERSION file -- see ARCHITECTURE.md).
 // Every release therefore gets a brand-new cache name automatically; the
 // activate handler deletes every cache from a previous version, so old
@@ -12,7 +12,7 @@
 // clear Safari website data. The cache exists purely for offline use in
 // the field.
 
-const CACHE_NAME = 'clipboard-cache-7.1.1';
+const CACHE_NAME = 'clipboard-cache-8.0.0';
 const CACHE_PREFIX = 'clipboard-cache-';
 
 self.addEventListener('install', () => {
