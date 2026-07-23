@@ -709,7 +709,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "No",
       "Visibility Rule": "Always"
     },
@@ -726,7 +726,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "No",
       "Visibility Rule": "Always"
     },
@@ -895,7 +895,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "No",
       "Visibility Rule": "Always"
     },
@@ -1645,7 +1645,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Bathrooms",
       "Visibility Rule": "Always"
