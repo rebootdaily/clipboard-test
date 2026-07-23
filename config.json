@@ -866,7 +866,7 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
-      "Visibility Rule": "Security Bars=Yes"
+      "Visibility Rule": "security_bars=Yes"
     },
     {
       "Display Order": 632,
@@ -880,7 +880,7 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
-      "Visibility Rule": "Security Bars=Yes"
+      "Visibility Rule": "security_bars=Yes"
     },
     {
       "Display Order": 640,
