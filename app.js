@@ -40,7 +40,7 @@ function clearHiddenValues(){
   [...CFG.app,...CFG.followups].forEach(f=>{const id=f['Field ID'];if(id&&f['Visibility Rule']&&!ruleVisible(f['Visibility Rule'])&&Object.prototype.hasOwnProperty.call(state.values,id)){delete state.values[id];changed=true}});
   return changed;
 }
-function buildTabs(){let nav=[...(CFG.navigation||[])];if(!nav.includes('Sketch'))nav.splice(Math.max(0,nav.length-1),0,'Sketch');if(!nav.includes('Exit Interview'))nav.splice(Math.max(0,nav.length-1),0,'Exit Interview');if(!nav.includes('Office Summary')){const reviewIndex=nav.indexOf('Review');nav.splice(reviewIndex>=0?reviewIndex:nav.length,0,'Office Summary');}$('#tabs').innerHTML=nav.map(t=>`<button class="tab ${state.activeTab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.activeTab=b.dataset.tab;buildTabs();render();scrollTo(0,0)})}
+function buildTabs(){let nav=[...(CFG.navigation||[])];if(!nav.includes('Sketch'))nav.splice(Math.max(0,nav.length-1),0,'Sketch');if(!nav.includes('Footprint')){const sketchIdx=nav.indexOf('Sketch');nav.splice(sketchIdx>=0?sketchIdx+1:Math.max(0,nav.length-1),0,'Footprint');}if(!nav.includes('Exit Interview'))nav.splice(Math.max(0,nav.length-1),0,'Exit Interview');if(!nav.includes('Office Summary')){const reviewIndex=nav.indexOf('Review');nav.splice(reviewIndex>=0?reviewIndex:nav.length,0,'Office Summary');}$('#tabs').innerHTML=nav.map(t=>`<button class="tab ${state.activeTab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.activeTab=b.dataset.tab;buildTabs();render();scrollTo(0,0)})}
 function hasMeaningfulValue(v){return v!==undefined&&v!==null&&v!==''&&!(Array.isArray(v)&&!v.length)&&v!==false&&String(v).toLowerCase()!=='no'&&Number(v)!==0}
 function followTriggerMatches(f,v){
   if(!hasMeaningfulValue(v))return false;
@@ -63,7 +63,7 @@ function nextLivingAreaFieldId(id){const list=livingAreasToggleFields().slice().
 function autoAdvanceLivingArea(id){if(!AUTO_ADVANCE_LIVING_AREAS)return;const nextId=nextLivingAreaFieldId(id);if(!nextId)return;const nextEl=document.querySelector(`.field[data-id="${nextId}"]`);if(nextEl)nextEl.scrollIntoView({behavior:'smooth',block:'center'})}
 function renderCounterbar(){const bar=$('#counterbar');if(!bar)return;const fields=aggregateCounterFields();const hasLivingAreas=livingAreasToggleFields().length>0;const livingAreasChip=hasLivingAreas?`<div class="counterchip">Living Areas<b data-counter-id="${LIVING_AREAS_COUNTER_ID}">0</b></div>`:'';bar.innerHTML=livingAreasChip+fields.map(f=>`<div class="counterchip">${esc(fieldLabel(f))}<b data-counter-id="${esc(f['Field ID'])}">0</b></div>`).join('')}
 function updateCounterVisibility(){const bar=$('#counterbar');if(bar)bar.hidden=!['Interior','Sketch','Exit Interview','Office Summary','Review'].includes(state.activeTab)}
-function render(){updateCounterVisibility();if(state.activeTab==='Sketch')return renderSketch();if(state.activeTab==='Office Summary')return renderOfficeSummary();if(state.activeTab==='Review')return renderReview();let rows=rowsForTab(state.activeTab),groupKey=state.activeTab==='Exit Interview'?'Follow-Up Group':'Section',html='',last='';for(const f of rows){let sec=f[groupKey]||'General';if(sec!==last){html+=`<h2 class="section-title">${esc(sec)}</h2>`;last=sec}html+=fieldHtml(f)}if(!html)html='<div class="empty">No fields are configured for this tab yet.</div>';$('#screen').innerHTML=html;wireFields()}
+function render(){updateCounterVisibility();if(state.activeTab==='Sketch')return renderSketch();if(state.activeTab==='Footprint')return renderFootprint();if(state.activeTab==='Office Summary')return renderOfficeSummary();if(state.activeTab==='Review')return renderReview();let rows=rowsForTab(state.activeTab),groupKey=state.activeTab==='Exit Interview'?'Follow-Up Group':'Section',html='',last='';for(const f of rows){let sec=f[groupKey]||'General';if(sec!==last){html+=`<h2 class="section-title">${esc(sec)}</h2>`;last=sec}html+=fieldHtml(f)}if(!html)html='<div class="empty">No fields are configured for this tab yet.</div>';$('#screen').innerHTML=html;wireFields()}
 function fieldHtml(f){let id=f['Field ID'],val=state.values[id],req=truth(f.Required),flagged=state.flags[id],compact=String(f.Section||'').trim().toLowerCase()==='living areas';return`<section class="field ${req?'required':''} ${flagged?'flagged':''} ${compact?'compact':''}" data-id="${esc(id)}"><div class="labelrow"><div class="label">${esc(f['Field Label']||f.Question)}</div><div class="tools"><button class="iconbtn noteBtn ${state.notes[id]?'active':''}" title="Add note">📝</button><button class="iconbtn voiceNoteBtn" title="Dictate note">🎤</button><label class="iconbtn" title="Take photo">📷<input class="photo-input camera-input" type="file" accept="image/*" capture="environment" multiple></label><label class="iconbtn" title="Choose from gallery">🖼️<input class="photo-input gallery-input" type="file" accept="image/*" multiple></label><button class="iconbtn flagBtn ${flagged?'active':''}" title="Flag for review">⚑</button></div></div><div class="control">${controlHtml(f,val)}</div><div class="note ${state.notes[id]!==undefined?'open':''}"><textarea class="noteText" placeholder="Note for this field">${esc(state.notes[id]||'')}</textarea></div><div class="photo-count">${(state.photos[id]||[]).length?`${state.photos[id].length} photo(s) attached`:''}</div></section>`}
 function controlHtml(f,val){let type=f['Input Type'],opts=optionsFor(f.Options);if(type==='LongText')return`<textarea class="value" placeholder="Enter details">${esc(val||'')}</textarea>`;if(type==='Text'||type==='Currency')return`<input class="value" type="${type==='Currency'?'number':'text'}" value="${esc(val??'')}" ${type==='Currency'?'step="0.01"':''}>`;if(type==='Date'||type==='Time')return`<input class="value" type="${type.toLowerCase()}" value="${esc(val??'')}">`;if(type==='Dropdown')return`<select class="value"><option value="">Select…</option>${opts.map(o=>`<option value="${esc(o)}" ${String(val)===String(o)?'selected':''}>${esc(o)}</option>`).join('')}</select>`;if(type==='Button'||type==='Toggle'||type==='Rating')return`<div class="choices ${type==='Toggle'?'toggle':''}">${(opts.length?opts:(type==='Toggle'?['Yes','No']:[])).map(o=>`<button class="choice ${String(val)===String(o)?'selected':''}" data-choice="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='MultiSelect')return`<div class="choices">${opts.map(o=>`<button class="choice ${(Array.isArray(val)&&val.includes(o))?'selected':''}" data-multi="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='Checkbox')return`<label><input class="checkValue" type="checkbox" ${truth(val)?'checked':''}> Yes</label>`;if(type==='Counter')return`<div class="counter"><button data-delta="-1">−</button><output>${Number(val||0)}</output><button data-delta="1">+</button></div>`;if(type==='Camera')return`<div class="camera-gallery-row"><label class="action secondary">📷 Take photo<input class="photo-input valuePhoto camera-input" type="file" accept="image/*" capture="environment" multiple></label><label class="action secondary">🖼️ Gallery<input class="photo-input valuePhoto gallery-input" type="file" accept="image/*" multiple></label></div>`;if(type==='Sketch')return`<button class="action secondary openSketch">Open Sketch Workspace</button>`;return`<input class="value" type="text" value="${esc(val??'')}">`}
 function speechRecognition(){return window.SpeechRecognition||window.webkitSpeechRecognition||null}
@@ -293,6 +293,97 @@ function wireFieldSketch(){const p=fsPage(),c=$('#fieldSketchCanvas'),stage=$('#
   if(!fsDraft||fsDraft.pointerId!==e.pointerId)return;const samples=e.getCoalescedEvents?e.getCoalescedEvents():[e];if(fsDraft.kind==='pencil'){for(const s of samples)fsDraft.points.push(fsWorld(s.clientX,s.clientY))}else fsDraft.points[1]=wp;fsDraw()};
  const pointerEnd=e=>{if(!fsPointers.has(e.pointerId))return;if(e.cancelable)e.preventDefault();try{if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId)}catch(_){}fsPointers.delete(e.pointerId);if(e.pointerType==='pen')fsPenActive=false;if(fsPointers.size<2)fsGesture=null;if(fsTransform&&fsTransform.pointerId===e.pointerId){const t=fsTransform;if(t.type==='move'||t.type==='resize')save();else if(t.type==='erase')save();const tapMoved=t.type==='move'&&t.startClientX!==undefined?Math.hypot(e.clientX-t.startClientX,e.clientY-t.startClientY):999;fsTransform=null;if(t.type==='move'&&t.wasSelected&&tapMoved<8){const o=p.objects.find(x=>x.id===t.objId);if(o&&o.kind==='text'){fsDraw();fsOpenTextEditor(o.style,o,null);return}}fsDraw();return}if(fsDraft&&fsDraft.pointerId===e.pointerId){const d=fsDraft;fsDraft=null;if((d.points||[]).length>1){fsCommit();delete d.pointerId;p.objects.push(d);save()}fsDraw()}};
  c.addEventListener('pointerdown',pointerDown,{passive:false});c.addEventListener('pointermove',pointerMove,{passive:false});c.addEventListener('pointerup',pointerEnd,{passive:false});c.addEventListener('pointercancel',pointerEnd,{passive:false});c.addEventListener('lostpointercapture',pointerEnd,{passive:false});stage.addEventListener('wheel',e=>{e.preventDefault();fsZoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:.89)},{passive:false});c.addEventListener('dblclick',e=>{if(fsTool==='select'){const h=fsHit(fsWorld(e.clientX,e.clientY));if(h&&h.kind==='text'){fsSelectedId=h.id;fsEditSelected()}}});
+}
+
+/* Footprint — Stage 1 isolated prototype. Own state (state.footprint), own DOM, own
+   canvas. Never reads CFG, never touches state.sketch or state.fieldSketch. Sketch tab
+   and the fs* engine above are untouched and remain fully functional. */
+let fpTool='pencil',fpDraft=null,fpUndo=[],fpRedo=[],fpPointers=new Map(),fpGesture=null,fpDrag=null,fpResizeObserver=null,fpWheelSaveTimer=null;
+const FP_MIN_SCALE=.1,FP_MAX_SCALE=8,FP_LINE_WIDTH=4;
+function ensureFootprint(){if(!state.footprint||!Array.isArray(state.footprint.strokes))state.footprint={strokes:[],viewport:{scale:1,x:0,y:0}};if(!state.footprint.viewport)state.footprint.viewport={scale:1,x:0,y:0};return state.footprint}
+function fpSnapshot(){return JSON.parse(JSON.stringify(ensureFootprint()))}
+function fpCommit(){fpUndo.push(fpSnapshot());if(fpUndo.length>60)fpUndo.shift();fpRedo=[]}
+function fpId(){return'fpstroke-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
+function fpMetrics(){const c=$('#footprintCanvas'),r=c.getBoundingClientRect();return{c,r,sx:c.width/r.width,sy:c.height/r.height}}
+function fpScreen(clientX,clientY){const{r,sx,sy}=fpMetrics();return{x:(clientX-r.left)*sx,y:(clientY-r.top)*sy}}
+function fpWorld(clientX,clientY){const q=fpScreen(clientX,clientY),v=ensureFootprint().viewport;return{x:(q.x-v.x)/v.scale,y:(q.y-v.y)/v.scale}}
+function fpSizeCanvas(){const c=$('#footprintCanvas'),stage=$('#fpStage');if(!c||!stage)return false;const r=stage.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));if(c.width===w&&c.height===h)return false;c.width=w;c.height=h;return true}
+function fpDistanceToSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy,t=l2?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l2)):0;return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+function fpHit(p){const v=ensureFootprint(),scale=v.viewport.scale||1,tol=16/scale,arr=[...v.strokes].reverse();for(const s of arr){const pts=s.points||[];if(pts.length===1){if(Math.hypot(p.x-pts[0].x,p.y-pts[0].y)<tol)return s;continue}for(let i=1;i<pts.length;i++)if(fpDistanceToSegment(p,pts[i-1],pts[i])<tol)return s}return null}
+function fpDrawStroke(x,s){if(!s.points||!s.points.length)return;x.beginPath();if(s.points.length===1){x.moveTo(s.points[0].x,s.points[0].y);x.lineTo(s.points[0].x+.01,s.points[0].y+.01)}else{x.moveTo(s.points[0].x,s.points[0].y);for(let i=1;i<s.points.length;i++)x.lineTo(s.points[i].x,s.points[i].y)}x.stroke()}
+function fpDraw(){const c=$('#footprintCanvas');if(!c)return;const x=c.getContext('2d'),v=ensureFootprint().viewport;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.save();x.translate(v.x,v.y);x.scale(v.scale,v.scale);x.lineCap='round';x.lineJoin='round';x.strokeStyle='#17324d';x.lineWidth=FP_LINE_WIDTH;for(const s of ensureFootprint().strokes)fpDrawStroke(x,s);if(fpDraft)fpDrawStroke(x,fpDraft);x.restore()}
+function fpZoomAt(clientX,clientY,mult){const v=ensureFootprint().viewport,q=fpScreen(clientX,clientY),old=v.scale,ns=Math.max(FP_MIN_SCALE,Math.min(FP_MAX_SCALE,old*mult)),wx=(q.x-v.x)/old,wy=(q.y-v.y)/old;v.scale=ns;v.x=q.x-wx*ns;v.y=q.y-wy*ns;fpDraw()}
+function fpSetTool(t){fpTool=t;const menu=$('#fpOverflow');if(menu)menu.hidden=true;document.querySelectorAll('[data-fp-tool]').forEach(b=>b.classList.toggle('active',b.dataset.fpTool===t))}
+function fpUndoAction(){if(!fpUndo.length)return;fpRedo.push(fpSnapshot());state.footprint=fpUndo.pop();save();fpDraw()}
+function fpRedoAction(){if(!fpRedo.length)return;fpUndo.push(fpSnapshot());state.footprint=fpRedo.pop();save();fpDraw()}
+function fpClearCanvas(){fpCommit();ensureFootprint().strokes=[];save();fpDraw()}
+function renderFootprint(){ensureFootprint();$('#screen').innerHTML=`<h2 class="section-title">Footprint <span class="version-chip">Stage 1 Prototype</span></h2><div class="fp-card"><div class="fp-toolbar" id="fpToolbar"><button data-fp-tool="pencil" class="fp-btn active" title="Pencil">✏<span>Pencil</span></button><button data-fp-tool="eraser" class="fp-btn" title="Eraser">⌫<span>Eraser</span></button><button id="fpUndoBtn" class="fp-btn" title="Undo">↶<span>Undo</span></button><button data-fp-tool="hand" class="fp-btn" title="Pan">✋<span>Pan</span></button><button id="fpMoreBtn" class="fp-btn fp-more" title="More">⋯<span>More</span></button></div><div class="fp-overflow" id="fpOverflow" hidden><button id="fpRedoBtn" class="fp-overflow-btn">↷ Redo</button><button id="fpClearBtn" class="fp-overflow-btn danger">Clear Canvas</button></div><div class="fp-stage" id="fpStage"><canvas id="footprintCanvas"></canvas></div></div>`;wireFootprint()}
+function wireFootprint(){
+ const c=$('#footprintCanvas'),stage=$('#fpStage');
+ fpSizeCanvas();fpSetTool(fpTool);fpDraw();
+ document.querySelectorAll('[data-fp-tool]').forEach(b=>b.onclick=()=>fpSetTool(b.dataset.fpTool));
+ $('#fpUndoBtn').onclick=fpUndoAction;
+ $('#fpRedoBtn').onclick=fpRedoAction;
+ $('#fpClearBtn').onclick=()=>{$('#fpOverflow').hidden=true;fpClearCanvas()};
+ $('#fpMoreBtn').onclick=()=>{const m=$('#fpOverflow');m.hidden=!m.hidden};
+ if(fpResizeObserver)fpResizeObserver.disconnect();
+ if(window.ResizeObserver){fpResizeObserver=new ResizeObserver(()=>{if(fpSizeCanvas())fpDraw()});fpResizeObserver.observe(stage)}
+ else window.addEventListener('resize',()=>{if(fpSizeCanvas())fpDraw()});
+ const pointerDown=e=>{
+  e.preventDefault();
+  try{c.setPointerCapture(e.pointerId)}catch(_){}
+  const sp=fpScreen(e.clientX,e.clientY);
+  fpPointers.set(e.pointerId,{x:sp.x,y:sp.y,type:e.pointerType});
+  if(fpPointers.size===2){
+   fpDraft=null;fpDrag=null;
+   const a=[...fpPointers.values()],v=ensureFootprint().viewport,mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
+   fpGesture={dist:Math.max(1,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)),worldX:(mid.x-v.x)/v.scale,worldY:(mid.y-v.y)/v.scale,scale:v.scale};
+   return;
+  }
+  if(fpPointers.size>1)return;
+  const wp=fpWorld(e.clientX,e.clientY);
+  if(fpTool==='hand'){const v=ensureFootprint().viewport;fpDrag={pointerId:e.pointerId,startX:sp.x,startY:sp.y,vx:v.x,vy:v.y};return}
+  if(fpTool==='eraser'){const hit=fpHit(wp);if(hit){fpCommit();ensureFootprint().strokes=ensureFootprint().strokes.filter(s=>s!==hit);save();fpDraw()}fpDrag={pointerId:e.pointerId,erasing:true};return}
+  fpDraft={id:fpId(),points:[wp],pointerId:e.pointerId};
+ };
+ const pointerMove=e=>{
+  if(!fpPointers.has(e.pointerId))return;
+  e.preventDefault();
+  const sp=fpScreen(e.clientX,e.clientY),rec=fpPointers.get(e.pointerId);rec.x=sp.x;rec.y=sp.y;
+  if(fpPointers.size===2&&fpGesture){
+   const a=[...fpPointers.values()],v=ensureFootprint().viewport,d=Math.max(1,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)),m={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2},ns=Math.max(FP_MIN_SCALE,Math.min(FP_MAX_SCALE,fpGesture.scale*d/fpGesture.dist));
+   v.scale=ns;v.x=m.x-fpGesture.worldX*ns;v.y=m.y-fpGesture.worldY*ns;
+   fpDraw();return;
+  }
+  if(fpDrag&&fpDrag.pointerId===e.pointerId){
+   if(fpDrag.erasing){const wp=fpWorld(e.clientX,e.clientY),hit=fpHit(wp);if(hit){ensureFootprint().strokes=ensureFootprint().strokes.filter(s=>s!==hit);fpDraw()}return}
+   const v=ensureFootprint().viewport;v.x=fpDrag.vx+(sp.x-fpDrag.startX);v.y=fpDrag.vy+(sp.y-fpDrag.startY);fpDraw();return;
+  }
+  if(!fpDraft||fpDraft.pointerId!==e.pointerId)return;
+  const samples=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+  for(const ev of samples)fpDraft.points.push(fpWorld(ev.clientX,ev.clientY));
+  fpDraw();
+ };
+ const pointerEnd=e=>{
+  if(!fpPointers.has(e.pointerId))return;
+  if(e.cancelable)e.preventDefault();
+  try{if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId)}catch(_){}
+  fpPointers.delete(e.pointerId);
+  if(fpPointers.size<2)fpGesture=null;
+  if(fpDrag&&fpDrag.pointerId===e.pointerId){fpDrag=null;if(fpPointers.size===0)save();return}
+  if(fpDraft&&fpDraft.pointerId===e.pointerId){
+   const d=fpDraft;fpDraft=null;
+   if((d.points||[]).length>1){fpCommit();delete d.pointerId;ensureFootprint().strokes.push(d);save()}
+   fpDraw();
+  }
+  if(fpPointers.size===0)save();
+ };
+ c.addEventListener('pointerdown',pointerDown,{passive:false});
+ c.addEventListener('pointermove',pointerMove,{passive:false});
+ c.addEventListener('pointerup',pointerEnd,{passive:false});
+ c.addEventListener('pointercancel',pointerEnd,{passive:false});
+ c.addEventListener('lostpointercapture',pointerEnd,{passive:false});
+ stage.addEventListener('wheel',e=>{e.preventDefault();fpZoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:.89);clearTimeout(fpWheelSaveTimer);fpWheelSaveTimer=setTimeout(save,400)},{passive:false});
 }
 
 init();
