@@ -709,7 +709,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "No",
       "Visibility Rule": "Always"
     },
@@ -726,7 +726,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "No",
       "Visibility Rule": "Always"
     },
@@ -2083,7 +2083,7 @@
       "Photo": "Yes",
       "Notes": "Yes",
       "Status": "Draft",
-      "Visible": "Yes",
+      "Visible": "No",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Electrical",
       "Visibility Rule": "Always"
@@ -2121,7 +2121,7 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1470,
@@ -2138,7 +2138,7 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1480,
@@ -2154,7 +2154,7 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1490,
@@ -3892,8 +3892,8 @@
   },
   "settings": {
     "App Name": "Clipboard",
-    "Version": "8.0.2",
-    "Workbook Role": "Live master configuration for Clipboard v8.0.2",
+    "Version": "8.0.3",
+    "Workbook Role": "Live master configuration for Clipboard v8.0.3",
     "Theme": "Light",
     "Large Text": "Yes",
     "Large Buttons": "Yes",
