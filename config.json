@@ -15,7 +15,8 @@
       "Comments": "Subject address; future public-data prefill.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 15,
@@ -33,7 +34,8 @@
       "Comments": "If FHA locate well, drain field, Utilities, Scuttle",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 20,
@@ -52,7 +54,8 @@
       "Comments": "Controls applicable screens and sketch workflow.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 30,
@@ -70,7 +73,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 35,
@@ -89,7 +93,8 @@
       "Comments": "Who allowed access",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 40,
@@ -106,7 +111,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 50,
@@ -123,7 +129,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 60,
@@ -141,7 +148,8 @@
       "Comments": "Allow mixed/expanded design descriptions.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 70,
@@ -159,7 +167,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 80,
@@ -177,7 +186,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 90,
@@ -195,7 +205,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "PUD",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 100,
@@ -213,7 +224,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "HOA",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 110,
@@ -230,7 +242,8 @@
       "Comments": "General field observations only; reported updates belong in Exit Interview.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 200,
@@ -248,7 +261,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 210,
@@ -266,7 +280,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 220,
@@ -283,7 +298,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 230,
@@ -300,7 +316,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "alley_present=Yes"
+      "Visibility Rule": "alley_present=Yes",
+      "Resolved Visibility Rule": "alley_present=Yes"
     },
     {
       "Display Order": 240,
@@ -317,7 +334,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "alley_present=Yes"
+      "Visibility Rule": "alley_present=Yes",
+      "Resolved Visibility Rule": "alley_present=Yes"
     },
     {
       "Display Order": 250,
@@ -335,7 +353,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 260,
@@ -353,7 +372,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 270,
@@ -371,7 +391,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 280,
@@ -389,7 +410,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 290,
@@ -406,7 +428,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 300,
@@ -423,7 +446,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 310,
@@ -441,7 +465,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 320,
@@ -461,7 +486,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Well",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 330,
@@ -481,7 +507,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Septic",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 340,
@@ -498,7 +525,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 350,
@@ -516,7 +544,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 360,
@@ -534,7 +563,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Dock / Boat Lift",
-      "Visibility Rule": "waterfront_type<>None"
+      "Visibility Rule": "waterfront_type<>None",
+      "Resolved Visibility Rule": "waterfront_type<>None"
     },
     {
       "Display Order": 365,
@@ -552,7 +582,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Dock / Boat Lift",
-      "Visibility Rule": "dock_present=Yes"
+      "Visibility Rule": "dock_present=Yes",
+      "Resolved Visibility Rule": "dock_present=Yes"
     },
     {
       "Display Order": 370,
@@ -568,7 +599,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 400,
@@ -586,7 +618,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 410,
@@ -604,7 +637,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 420,
@@ -623,7 +657,8 @@
       "Comments": "Mixed materials common; use MultiSelect.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 430,
@@ -641,7 +676,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 500,
@@ -660,7 +696,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Roof",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 510,
@@ -677,7 +714,8 @@
       "Status": "Draft",
       "Visible": "No",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 520,
@@ -694,7 +732,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 530,
@@ -711,7 +750,8 @@
       "Status": "Draft",
       "Visible": "No",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 540,
@@ -728,7 +768,8 @@
       "Status": "Draft",
       "Visible": "No",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 550,
@@ -746,7 +787,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Fireplace",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 560,
@@ -764,7 +806,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Solar",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 570,
@@ -780,7 +823,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 600,
@@ -798,7 +842,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Windows",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 610,
@@ -815,7 +860,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 620,
@@ -832,7 +878,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 630,
@@ -849,7 +896,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 631,
@@ -866,7 +914,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
-      "Visibility Rule": "security_bars=Yes"
+      "Visibility Rule": "security_bars=Yes",
+      "Resolved Visibility Rule": "security_bars=Yes"
     },
     {
       "Display Order": 632,
@@ -880,7 +929,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
-      "Visibility Rule": "security_bars=Yes"
+      "Visibility Rule": "security_bars=Yes",
+      "Resolved Visibility Rule": "security_bars=Yes"
     },
     {
       "Display Order": 640,
@@ -897,7 +947,8 @@
       "Status": "Draft",
       "Visible": "No",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 650,
@@ -914,7 +965,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 700,
@@ -931,7 +983,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 710,
@@ -948,7 +1001,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 720,
@@ -965,7 +1019,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 730,
@@ -983,7 +1038,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Garage Conversion",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 740,
@@ -1001,7 +1057,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Addition",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 750,
@@ -1019,7 +1076,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Guesthouse / Detached Structure",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 800,
@@ -1036,7 +1094,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 810,
@@ -1053,7 +1112,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 820,
@@ -1070,7 +1130,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 830,
@@ -1087,7 +1148,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 840,
@@ -1105,7 +1167,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Pool",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 850,
@@ -1122,7 +1185,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "pool_present=Yes"
+      "Visibility Rule": "pool_present=Yes",
+      "Resolved Visibility Rule": "pool_present=Yes"
     },
     {
       "Display Order": 860,
@@ -1139,7 +1203,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 870,
@@ -1156,7 +1221,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 880,
@@ -1173,7 +1239,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 890,
@@ -1190,7 +1257,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 900,
@@ -1207,7 +1275,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 910,
@@ -1223,7 +1292,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 950,
@@ -1241,7 +1311,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 952,
@@ -1258,7 +1329,8 @@
       "Status": "Draft",
       "Comments": "Presence checklist",
       "Visible": "Yes",
-      "Trigger Follow-Up": "No"
+      "Trigger Follow-Up": "No",
+      "Resolved Visibility Rule": ""
     },
     {
       "Display Order": 954,
@@ -1276,7 +1348,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 958,
@@ -1294,7 +1367,8 @@
       "Comments": "Intentional redundancy with Kitchen section",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 959,
@@ -1312,7 +1386,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 960,
@@ -1330,7 +1405,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 962,
@@ -1348,7 +1424,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 964,
@@ -1366,7 +1443,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 966,
@@ -1384,7 +1462,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 968,
@@ -1402,7 +1481,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 970,
@@ -1420,7 +1500,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 972,
@@ -1438,7 +1519,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 974,
@@ -1456,7 +1538,8 @@
       "Comments": "Presence checklist",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 976,
@@ -1473,7 +1556,8 @@
       "Comments": "Other room description",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1005,
@@ -1490,7 +1574,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1010,
@@ -1508,7 +1593,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Bathrooms",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1020,
@@ -1525,7 +1611,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1030,
@@ -1542,7 +1629,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1040,
@@ -1559,7 +1647,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1050,
@@ -1576,7 +1665,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1060,
@@ -1593,7 +1683,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1061,
@@ -1609,7 +1700,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1070,
@@ -1626,7 +1718,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1080,
@@ -1643,7 +1736,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1099,
@@ -1661,7 +1755,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Kitchen",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1100,
@@ -1678,7 +1773,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1101,
@@ -1695,7 +1791,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1102,
@@ -1712,7 +1809,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1103,
@@ -1729,7 +1827,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1104,
@@ -1746,7 +1845,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1105,
@@ -1763,7 +1863,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1106,
@@ -1780,7 +1881,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1107,
@@ -1797,7 +1899,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1108,
@@ -1814,7 +1917,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1110,
@@ -1831,7 +1935,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1120,
@@ -1848,7 +1953,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1130,
@@ -1865,7 +1971,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1140,
@@ -1881,7 +1988,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1200,
@@ -1898,7 +2006,8 @@
       "Status": "Draft",
       "Visible": "No",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1210,
@@ -1915,7 +2024,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1220,
@@ -1931,7 +2041,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1300,
@@ -1948,7 +2059,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1310,
@@ -1965,7 +2077,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1320,
@@ -1982,7 +2095,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1330,
@@ -1998,7 +2112,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1400,
@@ -2016,7 +2131,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "HVAC",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1410,
@@ -2033,7 +2149,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1420,
@@ -2051,7 +2168,8 @@
       "Visible": "Yes",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Water Heater",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1430,
@@ -2068,7 +2186,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1440,
@@ -2086,7 +2205,8 @@
       "Visible": "No",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Electrical",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1450,
@@ -2104,7 +2224,8 @@
       "Visible": "No",
       "Trigger Follow-Up": "Yes",
       "Follow-Up Group": "Plumbing",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1460,
@@ -2121,7 +2242,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "occupancy=Vacant"
+      "Visibility Rule": "VACANT_PROPERTY",
+      "Resolved Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1470,
@@ -2138,7 +2260,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "occupancy=Vacant"
+      "Visibility Rule": "VACANT_PROPERTY",
+      "Resolved Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1480,
@@ -2154,7 +2277,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "occupancy=Vacant"
+      "Visibility Rule": "VACANT_PROPERTY",
+      "Resolved Visibility Rule": "occupancy=Vacant"
     },
     {
       "Display Order": 1490,
@@ -2170,7 +2294,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1500,
@@ -2186,7 +2311,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1600,
@@ -2203,7 +2329,8 @@
       "Comments": "Special sketch workspace control.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1610,
@@ -2219,7 +2346,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1620,
@@ -2236,7 +2364,8 @@
       "Comments": "Multiple independent zoomable canvases.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1700,
@@ -2253,7 +2382,8 @@
       "Comments": "Rapid capture; categorize later.",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1710,
@@ -2270,7 +2400,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Display Order": 1800,
@@ -2286,7 +2417,8 @@
       "Status": "Draft",
       "Visible": "Yes",
       "Trigger Follow-Up": "No",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     }
   ],
   "followups": [
@@ -2299,7 +2431,8 @@
       "Options": "InformationSource",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2309,7 +2442,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2319,7 +2453,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2329,7 +2464,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2339,7 +2475,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2349,7 +2486,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2359,7 +2497,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2369,7 +2508,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2379,7 +2519,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "General",
@@ -2389,7 +2530,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2399,7 +2541,8 @@
       "Input Type": "Currency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2410,7 +2553,8 @@
       "Options": "FeeFrequency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2421,7 +2565,8 @@
       "Options": "PUDAmenities",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2432,7 +2577,8 @@
       "Options": "PUDMaintenance",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2442,7 +2588,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2452,7 +2599,8 @@
       "Input Type": "Currency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "pud_special_assessment=Yes"
+      "Visibility Rule": "pud_special_assessment=Yes",
+      "Resolved Visibility Rule": "pud_special_assessment=Yes"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2462,7 +2610,8 @@
       "Input Type": "Date",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "pud_special_assessment=Yes"
+      "Visibility Rule": "pud_special_assessment=Yes",
+      "Resolved Visibility Rule": "pud_special_assessment=Yes"
     },
     {
       "Follow-Up Group": "PUD",
@@ -2472,7 +2621,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2482,7 +2632,8 @@
       "Input Type": "Currency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2493,7 +2644,8 @@
       "Options": "FeeFrequency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2504,7 +2656,8 @@
       "Options": "HOAIncludes",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2514,7 +2667,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2524,7 +2678,8 @@
       "Input Type": "Currency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "hoa_special_assessment=Yes"
+      "Visibility Rule": "hoa_special_assessment=Yes",
+      "Resolved Visibility Rule": "hoa_special_assessment=Yes"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2534,7 +2689,8 @@
       "Input Type": "Date",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "hoa_special_assessment=Yes"
+      "Visibility Rule": "hoa_special_assessment=Yes",
+      "Resolved Visibility Rule": "hoa_special_assessment=Yes"
     },
     {
       "Follow-Up Group": "HOA",
@@ -2544,7 +2700,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Roof",
@@ -2554,7 +2711,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Roof",
@@ -2564,7 +2722,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Roof",
@@ -2574,7 +2733,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Roof",
@@ -2585,7 +2745,8 @@
       "Options": "InformationSource",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Roof",
@@ -2595,7 +2756,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2606,7 +2768,8 @@
       "Options": "SolarOwnership",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2616,7 +2779,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2626,7 +2790,8 @@
       "Input Type": "Currency",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "solar_ownership=Leased"
+      "Visibility Rule": "solar_ownership=Leased",
+      "Resolved Visibility Rule": "solar_ownership=Leased"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2636,7 +2801,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "solar_ownership=Financed"
+      "Visibility Rule": "solar_ownership=Financed",
+      "Resolved Visibility Rule": "solar_ownership=Financed"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2646,7 +2812,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2656,7 +2823,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Solar",
@@ -2666,7 +2834,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Windows",
@@ -2676,7 +2845,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Windows",
@@ -2686,7 +2856,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Windows",
@@ -2696,7 +2867,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Windows",
@@ -2706,7 +2878,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Kitchen",
@@ -2716,7 +2889,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Kitchen",
@@ -2726,7 +2900,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Kitchen",
@@ -2737,7 +2912,8 @@
       "Options": "RemodelScope",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Kitchen",
@@ -2747,7 +2923,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Kitchen",
@@ -2757,7 +2934,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Bathrooms",
@@ -2767,7 +2945,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Bathrooms",
@@ -2778,7 +2957,8 @@
       "Options": "BathroomLocation",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Bathrooms",
@@ -2788,7 +2968,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Bathrooms",
@@ -2798,7 +2979,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Bathrooms",
@@ -2808,7 +2990,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HVAC",
@@ -2818,7 +3001,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HVAC",
@@ -2828,7 +3012,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HVAC",
@@ -2838,7 +3023,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "HVAC",
@@ -2848,7 +3034,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Water Heater",
@@ -2858,7 +3045,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Water Heater",
@@ -2868,7 +3056,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Water Heater",
@@ -2878,7 +3067,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Pool",
@@ -2888,7 +3078,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Pool",
@@ -2898,7 +3089,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Pool",
@@ -2908,7 +3100,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Pool",
@@ -2918,7 +3111,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Addition",
@@ -2928,7 +3122,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Addition",
@@ -2939,7 +3134,8 @@
       "Options": "AdditionUse",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Addition",
@@ -2949,7 +3145,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Addition",
@@ -2959,7 +3156,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Addition",
@@ -2969,7 +3167,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Garage Conversion",
@@ -2979,7 +3178,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Garage Conversion",
@@ -2990,7 +3190,8 @@
       "Options": "GarageConversionUse",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Garage Conversion",
@@ -3000,7 +3201,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Garage Conversion",
@@ -3010,7 +3212,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Guesthouse / Detached Structure",
@@ -3021,7 +3224,8 @@
       "Options": "DetachedStructureUse",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Guesthouse / Detached Structure",
@@ -3031,7 +3235,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Guesthouse / Detached Structure",
@@ -3041,7 +3246,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Guesthouse / Detached Structure",
@@ -3052,7 +3258,8 @@
       "Options": "DetachedUtilities",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Guesthouse / Detached Structure",
@@ -3062,7 +3269,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Well",
@@ -3072,7 +3280,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Well",
@@ -3083,7 +3292,8 @@
       "Options": "WellUse",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Well",
@@ -3093,7 +3303,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Septic",
@@ -3103,7 +3314,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Septic",
@@ -3113,7 +3325,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Septic",
@@ -3123,7 +3336,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Dock / Boat Lift",
@@ -3133,7 +3347,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Dock / Boat Lift",
@@ -3143,7 +3358,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Dock / Boat Lift",
@@ -3153,7 +3369,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Dock / Boat Lift",
@@ -3163,7 +3380,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Fireplace",
@@ -3173,7 +3391,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Fireplace",
@@ -3184,7 +3403,8 @@
       "Options": "FireplaceFuel",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Fireplace",
@@ -3194,7 +3414,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Electrical",
@@ -3204,7 +3425,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Electrical",
@@ -3214,7 +3436,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Electrical",
@@ -3224,7 +3447,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Electrical",
@@ -3234,7 +3458,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Plumbing",
@@ -3244,7 +3469,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Plumbing",
@@ -3254,7 +3480,8 @@
       "Input Type": "Text",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Plumbing",
@@ -3264,7 +3491,8 @@
       "Input Type": "Toggle",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     },
     {
       "Follow-Up Group": "Plumbing",
@@ -3274,7 +3502,8 @@
       "Input Type": "LongText",
       "Required": "No",
       "Status": "Draft",
-      "Visibility Rule": "Always"
+      "Visibility Rule": "Always",
+      "Resolved Visibility Rule": "Always"
     }
   ],
   "lists": {
@@ -3892,8 +4121,8 @@
   },
   "settings": {
     "App Name": "Clipboard",
-    "Version": "8.0.3",
-    "Workbook Role": "Live master configuration for Clipboard v8.0.3",
+    "Version": "8.0.4",
+    "Workbook Role": "Live master configuration for Clipboard v8.0.4",
     "Theme": "Light",
     "Large Text": "Yes",
     "Large Buttons": "Yes",

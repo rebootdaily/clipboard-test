@@ -206,9 +206,101 @@ def records(rows):
     return out
 
 
+HIDE_SENTINEL = "__unresolved_rule__=__never_true__"
+_OPERATOR_RE = re.compile(r"(>=|<=|<>|!=|==|=|>|<)")
+_OR_SPLIT_RE = re.compile(r"\s*(?:\|\||OR)\s*", re.IGNORECASE)
+_AND_SPLIT_RE = re.compile(r"\s*(?:&&|AND)\s*", re.IGNORECASE)
+
+
+def build_rules(sheets):
+    """Read the optional Rules worksheet into two dictionaries: every rule
+    ID that exists (regardless of Active), and only the active ones. The
+    Rules worksheet is entirely optional -- a workbook without it produces
+    two empty dicts, and every Visibility Rule is treated as a direct
+    expression exactly as before (Test 7 backward compatibility)."""
+    rows = sheets.get("Rules", [])
+    all_rules, active_rules, issues = {}, {}, []
+
+    if not rows:
+        return all_rules, active_rules, issues
+
+    headers = [str(x).strip() for x in rows[0]]
+    if "Rule ID" not in headers or "Expression" not in headers:
+        issues.append("Rules worksheet is missing required column(s): Rule ID, Expression")
+        return all_rules, active_rules, issues
+
+    idx_id = headers.index("Rule ID")
+    idx_expr = headers.index("Expression")
+    idx_active = headers.index("Active") if "Active" in headers else None
+
+    for r in rows[1:]:
+        if not any(str(x).strip() for x in r):
+            continue
+
+        rule_id = str(r[idx_id]).strip() if idx_id < len(r) else ""
+        if not rule_id:
+            continue
+
+        expr = str(r[idx_expr]).strip() if idx_expr < len(r) else ""
+        is_active = True
+        if idx_active is not None and idx_active < len(r):
+            is_active = str(r[idx_active]).strip().lower() != "no"
+
+        if rule_id in all_rules:
+            issues.append(f"Duplicate Rule ID: {rule_id}")
+            continue
+
+        all_rules[rule_id] = expr
+        if is_active:
+            active_rules[rule_id] = expr
+
+    return all_rules, active_rules, issues
+
+
+def resolve_visibility_rule(rule_text, all_rules, active_rules, warnings):
+    """Resolve Rule ID references inside a Visibility Rule into their
+    Expression, clause by clause, so AND/OR combinations of rule IDs and/or
+    direct expressions both work. A clause with no comparison operator is
+    treated as a bare Rule ID reference: resolved if active, silently
+    hidden if it exists but is inactive, or logged as an unknown rule and
+    hidden if it doesn't exist anywhere. Direct expressions (with an
+    operator) pass through untouched."""
+    text = str(rule_text or "").strip()
+    if not text or text.lower() == "always":
+        return text
+
+    resolved_or_parts = []
+    for or_part in _OR_SPLIT_RE.split(text):
+        resolved_clauses = []
+        for clause in _AND_SPLIT_RE.split(or_part):
+            c = clause.strip()
+            if not c:
+                continue
+            if not _OPERATOR_RE.search(c):
+                if c in active_rules:
+                    resolved_clauses.append(active_rules[c])
+                elif c in all_rules:
+                    resolved_clauses.append(HIDE_SENTINEL)
+                else:
+                    warnings.append(f"Unknown Rule: {c}")
+                    resolved_clauses.append(HIDE_SENTINEL)
+            else:
+                resolved_clauses.append(c)
+        if resolved_clauses:
+            resolved_or_parts.append(" AND ".join(resolved_clauses))
+
+    return " OR ".join(resolved_or_parts) if resolved_or_parts else text
+
+
 def build_config(s, version):
     app = records(s.get("APP DESIGN", []))
     followups = records(s.get("FOLLOW-UP TEMPLATES", []))
+
+    all_rules, active_rules, rule_messages = build_rules(s)
+    for f in app + followups:
+        f["Resolved Visibility Rule"] = resolve_visibility_rule(
+            f.get("Visibility Rule", ""), all_rules, active_rules, rule_messages
+        )
 
     lists = {}
     rows = s.get("Lists", [])
@@ -248,6 +340,7 @@ def build_config(s, version):
         "lists": lists,
         "settings": settings,
         "navigation": nav,
+        "_ruleMessages": rule_messages,
     }
 
 
@@ -380,7 +473,8 @@ def main():
         version = read_version()
 
         cfg = build_config(sheets, version)
-        issues = validate(cfg)
+        rule_messages = cfg.pop("_ruleMessages", [])
+        issues = sorted(set(validate(cfg) + rule_messages))
 
         copied = copy_template_to_build()
         stamped = stamp_version(BUILD, version)
