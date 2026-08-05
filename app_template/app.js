@@ -46,13 +46,53 @@ function clearAllPhotoBlobs(){
     tx.onerror=()=>reject(tx.error);
   }));
 }
+function deletePhotoBlob(id){
+  return openPhotoDb().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(PHOTO_STORE,'readwrite');
+    tx.objectStore(PHOTO_STORE).delete(id);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  }));
+}
+
+/* Photo data model. state.photoRecords is a flat, order-independent array
+   -- identity is always record.id, never array position. There is no
+   multi-inspection concept anywhere in this app today, so inspectionId is
+   a fixed singleton value rather than a real per-inspection key; see the
+   project notes on this limitation. FREE_PHOTO_FIELD_ID names the one
+   real workbook field ("Free Shoot Photo Inbox") intended as the
+   general/untethered capture entry point -- every other field's camera/
+   gallery action is "structured" and inherits that field's own label. */
+const PHOTO_INSPECTION_ID='singleton';
+const FREE_PHOTO_FIELD_ID='free_shoot_photos';
+function ensurePhotoRecords(){if(!Array.isArray(state.photoRecords))state.photoRecords=[];return state.photoRecords}
+function deriveDefaultLabel(fieldLabel){const l=String(fieldLabel||'').trim();return l.replace(/\s+photo$/i,'').trim()||l}
+function photoDisplayLabel(rec){
+  if(rec.customLabel&&String(rec.customLabel).trim())return String(rec.customLabel).trim();
+  if(rec.defaultLabel&&String(rec.defaultLabel).trim())return String(rec.defaultLabel).trim();
+  if(rec.category&&String(rec.category).trim())return String(rec.category).trim();
+  return'Additional Photo';
+}
+function nextOrder(){const r=ensurePhotoRecords();return r.length?Math.max(...r.map(x=>Number(x.order)||0))+1:1}
+function migrateLegacyPhotoMap(oldPhotos){
+  const out=[];let order=1;
+  Object.keys(oldPhotos||{}).forEach(fieldId=>{
+    const f=(CFG.app||[]).find(x=>x['Field ID']===fieldId)||(CFG.followups||[]).find(x=>x['Field ID']===fieldId);
+    const label=f?(f['Field Label']||f.Question||fieldId):fieldId;
+    (oldPhotos[fieldId]||[]).forEach(meta=>{
+      if(!meta||!meta.photoId)return;
+      out.push({id:meta.photoId,inspectionId:PHOTO_INSPECTION_ID,sourceFieldId:fieldId,sourceFieldLabel:label,category:f?(f.Section||f.Tab||''):'',defaultLabel:deriveDefaultLabel(label),customLabel:'',caption:'',order:order++,createdAt:new Date(meta.lastModified||Date.now()).toISOString(),imageReference:meta.photoId});
+    });
+  });
+  return out;
+}
 
 async function init(){
   CFG=await fetch('config.json?v=__APP_VERSION__',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
   const defaults={};
   [...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')defaults[f['Field ID']]=f['Default Value']});
   const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-2-state')||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
-  if(saved){try{const parsed=JSON.parse(saved);state={...state,...parsed,values:{...defaults,...(parsed.values||{})},notes:parsed.notes||{},flags:parsed.flags||{},photos:parsed.photos||{},sketch:parsed.sketch||{strokes:[],background:'',viewport:{scale:1,x:0,y:0}}}}catch(e){state.values={...defaults}}}
+  if(saved){try{const parsed=JSON.parse(saved);state={...state,...parsed,values:{...defaults,...(parsed.values||{})},notes:parsed.notes||{},flags:parsed.flags||{},photos:parsed.photos||{},sketch:parsed.sketch||{strokes:[],background:'',viewport:{scale:1,x:0,y:0}}};if(!Array.isArray(state.photoRecords))state.photoRecords=Object.keys(parsed.photos||{}).length?migrateLegacyPhotoMap(parsed.photos):[]}catch(e){state.values={...defaults}}}
   else state.values={...defaults};
   $('#brand').textContent=CFG.settings['App Name']||'Clipboard';
   $('#version').textContent=CFG.settings.Version||'6.0';
@@ -136,7 +176,8 @@ function nextLivingAreaFieldId(id){const list=livingAreasToggleFields().slice().
 function autoAdvanceLivingArea(id){if(!AUTO_ADVANCE_LIVING_AREAS)return;const nextId=nextLivingAreaFieldId(id);if(!nextId)return;const nextEl=document.querySelector(`.field[data-id="${nextId}"]`);if(nextEl)nextEl.scrollIntoView({behavior:'smooth',block:'center'})}
 function renderCounterbar(){const bar=$('#counterbar');if(!bar)return;const fields=aggregateCounterFields();const hasLivingAreas=livingAreasToggleFields().length>0;const livingAreasChip=hasLivingAreas?`<div class="counterchip">Living Areas<b data-counter-id="${LIVING_AREAS_COUNTER_ID}">0</b></div>`:'';bar.innerHTML=livingAreasChip+fields.map(f=>`<div class="counterchip">${esc(fieldLabel(f))}<b data-counter-id="${esc(f['Field ID'])}">0</b></div>`).join('')}
 function updateCounterVisibility(){const bar=$('#counterbar');if(bar)bar.hidden=!['Interior','Sketch','Exit Interview','Office Summary','Review'].includes(state.activeTab)}
-function render(){stopDictation();updateCounterVisibility();if(state.activeTab==='Sketch')return renderSketch();if(state.activeTab==='Footprint')return renderFootprint();if(state.activeTab==='Office Summary')return renderOfficeSummary();if(state.activeTab==='Review')return renderReview();let rows=rowsForTab(state.activeTab),groupKey=state.activeTab==='Exit Interview'?'Follow-Up Group':'Section',html='',last='';for(const f of rows){let sec=f[groupKey]||'General';if(sec!==last){html+=`<h2 class="section-title">${esc(sec)}</h2>`;last=sec}html+=fieldHtml(f)}if(!html)html='<div class="empty">No fields are configured for this tab yet.</div>';$('#screen').innerHTML=html;wireFields()}
+function fieldTabHtml(tab){let rows=rowsForTab(tab),groupKey=tab==='Exit Interview'?'Follow-Up Group':'Section',html='',last='';for(const f of rows){let sec=f[groupKey]||'General';if(sec!==last){html+=`<h2 class="section-title">${esc(sec)}</h2>`;last=sec}html+=fieldHtml(f)}return html}
+function render(){stopDictation();updateCounterVisibility();if(state.activeTab==='Sketch')return renderSketch();if(state.activeTab==='Footprint')return renderFootprint();if(state.activeTab==='Office Summary')return renderOfficeSummary();if(state.activeTab==='Review')return renderReview();if(state.activeTab==='Photos')return renderPhotosPage();let html=fieldTabHtml(state.activeTab);if(!html)html='<div class="empty">No fields are configured for this tab yet.</div>';$('#screen').innerHTML=html;wireFields()}
 let openNoteIds=new Set();
 let activeFieldId=null;
 function setActiveField(id){
@@ -163,7 +204,7 @@ function showFieldDiagnostics(f){
 function handleFieldActivation(e){const field=e.target.closest?e.target.closest('.field'):null;setActiveField(field?field.dataset.id:null);if(devDiagnosticsOn&&field){const id=field.dataset.id,f=CFG.app.find(x=>x['Field ID']===id)||CFG.followups.find(x=>x['Field ID']===id);if(f)showFieldDiagnostics(f)}}
 document.addEventListener('pointerdown',handleFieldActivation);
 document.addEventListener('focusin',handleFieldActivation);
-function fieldHtml(f){let id=f['Field ID'],val=state.values[id],req=truth(f.Required),flagged=state.flags[id],compact=String(f.Section||'').trim().toLowerCase()==='living areas',active=id===activeFieldId,noteText=String(state.notes[id]||'').trim(),photoCount=(state.photos[id]||[]).length;let indicators=(noteText?`<button type="button" class="chip chip-note noteIndicator">📝 Note</button>`:'')+(flagged?`<span class="chip chip-flag">⚑ Flagged</span>`:'')+(photoCount?`<span class="chip chip-photo">📷 ${photoCount}</span>`:'');return`<section class="field ${req?'required':''} ${flagged?'flagged':''} ${compact?'compact':''} ${active?'active':''}" data-id="${esc(id)}"><div class="labelrow" tabindex="0"><div class="label">${esc(f['Field Label']||f.Question)}</div><div class="tools"><button class="iconbtn noteBtn ${state.notes[id]?'active':''}" title="Add note">📝</button><button class="iconbtn voiceNoteBtn" title="Dictate note">🎤</button><label class="iconbtn" title="Take photo">📷<input class="photo-input camera-input" type="file" accept="image/*" capture="environment" multiple></label><label class="iconbtn" title="Choose from gallery">🖼️<input class="photo-input gallery-input" type="file" accept="image/*" multiple></label><button class="iconbtn flagBtn ${flagged?'active':''}" title="Flag for review">⚑</button></div></div><div class="control">${controlHtml(f,val)}</div><div class="note ${openNoteIds.has(id)?'open':''}"><textarea class="noteText" placeholder="Note for this field">${esc(state.notes[id]||'')}</textarea></div>${indicators?`<div class="field-indicators">${indicators}</div>`:''}</section>`}
+function fieldHtml(f){let id=f['Field ID'],val=state.values[id],req=truth(f.Required),flagged=state.flags[id],compact=String(f.Section||'').trim().toLowerCase()==='living areas',active=id===activeFieldId,noteText=String(state.notes[id]||'').trim(),photoCount=ensurePhotoRecords().filter(r=>r.sourceFieldId===id).length;let indicators=(noteText?`<button type="button" class="chip chip-note noteIndicator">📝 Note</button>`:'')+(flagged?`<span class="chip chip-flag">⚑ Flagged</span>`:'')+(photoCount?`<span class="chip chip-photo">📷 ${photoCount}</span>`:'');return`<section class="field ${req?'required':''} ${flagged?'flagged':''} ${compact?'compact':''} ${active?'active':''}" data-id="${esc(id)}"><div class="labelrow" tabindex="0"><div class="label">${esc(f['Field Label']||f.Question)}</div><div class="tools"><button class="iconbtn noteBtn ${state.notes[id]?'active':''}" title="Add note">📝</button><button class="iconbtn voiceNoteBtn" title="Dictate note">🎤</button><label class="iconbtn" title="Take photo">📷<input class="photo-input camera-input" type="file" accept="image/*" capture="environment" multiple></label><label class="iconbtn" title="Choose from gallery">🖼️<input class="photo-input gallery-input" type="file" accept="image/*" multiple></label><button class="iconbtn flagBtn ${flagged?'active':''}" title="Flag for review">⚑</button></div></div><div class="control">${controlHtml(f,val)}</div><div class="note ${openNoteIds.has(id)?'open':''}"><textarea class="noteText" placeholder="Note for this field">${esc(state.notes[id]||'')}</textarea></div>${indicators?`<div class="field-indicators">${indicators}</div>`:''}</section>`}
 function controlHtml(f,val){let type=f['Input Type'],opts=optionsFor(f.Options);if(type==='LongText')return`<textarea class="value" placeholder="Enter details">${esc(val||'')}</textarea>`;if(type==='Text'||type==='Currency')return`<input class="value" type="${type==='Currency'?'number':'text'}" value="${esc(val??'')}" ${type==='Currency'?'step="0.01"':''}>`;if(type==='Date'||type==='Time')return`<input class="value" type="${type.toLowerCase()}" value="${esc(val??'')}">`;if(type==='Dropdown')return`<select class="value"><option value="">Select…</option>${opts.map(o=>`<option value="${esc(o)}" ${String(val)===String(o)?'selected':''}>${esc(o)}</option>`).join('')}</select>`;if(type==='Button'||type==='Toggle'||type==='Rating')return`<div class="choices ${type==='Toggle'?'toggle':''}">${(opts.length?opts:(type==='Toggle'?['Yes','No']:[])).map(o=>`<button class="choice ${String(val)===String(o)?'selected':''}" data-choice="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='MultiSelect')return`<div class="choices">${opts.map(o=>`<button class="choice ${(Array.isArray(val)&&val.includes(o))?'selected':''}" data-multi="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;if(type==='Checkbox')return`<label><input class="checkValue" type="checkbox" ${truth(val)?'checked':''}> Yes</label>`;if(type==='Counter')return`<div class="counter"><button data-delta="-1">−</button><output>${Number(val||0)}</output><button data-delta="1">+</button></div>`;if(type==='Camera')return`<div class="camera-gallery-row"><label class="action secondary">📷 Take photo<input class="photo-input valuePhoto camera-input" type="file" accept="image/*" capture="environment" multiple></label><label class="action secondary">🖼️ Gallery<input class="photo-input valuePhoto gallery-input" type="file" accept="image/*" multiple></label></div>`;if(type==='Sketch')return`<button class="action secondary openSketch">Open Sketch Workspace</button>`;return`<input class="value" type="text" value="${esc(val??'')}">`}
 function speechRecognition(){return window.SpeechRecognition||window.webkitSpeechRecognition||null}
 function findFieldNoteEl(fieldId){const f=fieldId?document.querySelector(`.field[data-id="${CSS.escape(fieldId)}"]`):null;return f?f.querySelector('.noteText'):null}
@@ -216,14 +257,23 @@ function linkedFieldId(id,fromSuffix,toSuffix){if(!id.endsWith(fromSuffix))retur
 function syncObservedFromToggle(id,val){const countId=linkedFieldId(id,'_observed','_count');if(!countId)return;if(truth(val)&&Number(state.values[countId]||0)===0)state.values[countId]=1}
 function syncObservedFromCounter(id,val){const observedId=linkedFieldId(id,'_count','_observed');if(!observedId)return;if(Number(val)>0)state.values[observedId]='Yes'}
 function wireFields(){document.querySelectorAll('.field').forEach(el=>{let id=el.dataset.id,input=el.querySelector('.value');if(input)input.oninput=()=>{state.values[id]=input.value;updateBadges();save()};let check=el.querySelector('.checkValue');if(check)check.onchange=()=>{state.values[id]=check.checked;changed()};el.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{state.values[id]=b.dataset.choice;syncObservedFromToggle(id,b.dataset.choice);if(String(b.dataset.choice).trim().toLowerCase()==='other')openAndFocusNote(el,id);changed(true);autoAdvanceLivingArea(id)});el.querySelectorAll('[data-multi]').forEach(b=>b.onclick=()=>{let a=Array.isArray(state.values[id])?[...state.values[id]]:[],x=b.dataset.multi;a.includes(x)?a.splice(a.indexOf(x),1):a.push(x);state.values[id]=a;if(String(x).trim().toLowerCase()==='other'&&a.includes(x))openAndFocusNote(el,id);changed(true)});el.querySelectorAll('[data-delta]').forEach(b=>b.onclick=()=>{state.values[id]=Math.max(0,Number(state.values[id]||0)+Number(b.dataset.delta));syncObservedFromCounter(id,state.values[id]);changed(true)});el.querySelector('.noteBtn').onclick=()=>toggleFieldNote(el,id);let ni=el.querySelector('.noteIndicator');if(ni)ni.onclick=()=>toggleFieldNote(el,id);el.querySelector('.voiceNoteBtn').onclick=()=>{const btn=el.querySelector('.voiceNoteBtn');if(activeDictation&&activeDictation.fieldId===id){stopDictation();return}openAndFocusNote(el,id);startDictation(id,btn)};el.querySelector('.noteText').oninput=e=>{state.notes[id]=e.target.value;save()};el.querySelector('.flagBtn').onclick=()=>{state.flags[id]=!state.flags[id];changed(true)};el.querySelectorAll('.photo-input').forEach(inp=>inp.onchange=async()=>{
-  const files=Array.from(inp.files),metas=[];
-  for(const f of files){
+  const files=Array.from(inp.files);
+  const isFree=id===FREE_PHOTO_FIELD_ID;
+  const f=CFG.app.find(x=>x['Field ID']===id);
+  const sourceLabel=f?fieldLabel(f):'';
+  let freeCount=isFree?ensurePhotoRecords().filter(r=>!r.sourceFieldId).length:0;
+  let added=false;
+  for(const file of files){
     const photoId='photo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
-    try{await savePhotoBlob({id:photoId,fieldId:id,blob:f,name:f.name,type:f.type,size:f.size,lastModified:f.lastModified||0})}
+    try{await savePhotoBlob({id:photoId,blob:file,name:file.name,type:file.type,size:file.size,lastModified:file.lastModified||0})}
     catch(_){showToast('Photo could not be saved');continue}
-    metas.push({photoId,name:f.name,size:f.size,type:f.type,lastModified:f.lastModified||0});
+    const rec=isFree
+      ?{id:photoId,inspectionId:PHOTO_INSPECTION_ID,sourceFieldId:null,sourceFieldLabel:'',category:'',defaultLabel:`Additional Photo ${++freeCount}`,customLabel:'',caption:'',order:nextOrder(),createdAt:new Date().toISOString(),imageReference:photoId}
+      :{id:photoId,inspectionId:PHOTO_INSPECTION_ID,sourceFieldId:id,sourceFieldLabel:sourceLabel,category:f?(f.Section||f.Tab||''):'',defaultLabel:deriveDefaultLabel(sourceLabel),customLabel:'',caption:'',order:nextOrder(),createdAt:new Date().toISOString(),imageReference:photoId};
+    ensurePhotoRecords().push(rec);
+    added=true;
   }
-  if(metas.length){state.photos[id]=[...(state.photos[id]||[]),...metas];changed(true)}
+  if(added)changed(true);
   inp.value='';
 });let os=el.querySelector('.openSketch');if(os)os.onclick=()=>{state.activeTab='Sketch';buildTabs();render();scrollTo(0,0)}})}
 function changed(r=false){updateCounters();updateBadges();save();if(r)render()}function updateCounters(){document.querySelectorAll('#counterbar [data-counter-id]').forEach(el=>{const id=el.dataset.counterId;el.textContent=id===LIVING_AREAS_COUNTER_ID?livingAreasCount():Number(state.values[id]||0)})}
@@ -333,7 +383,7 @@ function fieldLocation(f){return f.Tab==='Exit Interview'?'Exit Interview':(f.Ta
 function goToReviewField(tab,id){state.activeTab=tab;buildTabs();render();scrollTo(0,0);setTimeout(()=>{const el=document.querySelector(`.field[data-id="${CSS.escape(id)}"]`);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('review-focus');setTimeout(()=>el.classList.remove('review-focus'),1800)}},80)}
 function reviewItemHtml(item){const cls=item.level==='error'?'review-error':item.level==='warning'?'review-warning':'review-info';const icon=item.level==='error'?'✕':item.level==='warning'?'⚠':'ℹ';return`<button class="review-item ${cls}" data-review-tab="${esc(item.tab)}" data-review-id="${esc(item.id)}"><span class="review-icon">${icon}</span><span class="review-copy"><b>${esc(item.title)}</b><small>${esc(item.reason)}</small><em>${esc(item.tab)}${item.section?' • '+esc(item.section):''}</em></span><span class="review-arrow">›</span></button>`}
 function summaryValue(v){if(Array.isArray(v))return v.join(', ');if(v===true)return'Yes';if(v===false)return'No';return String(v??'').trim()}
-function summaryRows(tab){return CFG.app.filter(f=>f.Tab===tab&&truth(f.Visible??'Yes')&&ruleVisible(f['Resolved Visibility Rule'])).map(f=>{const id=f['Field ID'],value=summaryValue(state.values[id]),note=String(state.notes[id]||'').trim(),flag=!!state.flags[id],photos=(state.photos[id]||[]).length;return{f,id,value,note,flag,photos}}).filter(x=>x.value||x.note||x.flag||x.photos)}
+function summaryRows(tab){return CFG.app.filter(f=>f.Tab===tab&&truth(f.Visible??'Yes')&&ruleVisible(f['Resolved Visibility Rule'])).map(f=>{const id=f['Field ID'],value=summaryValue(state.values[id]),note=String(state.notes[id]||'').trim(),flag=!!state.flags[id],photos=ensurePhotoRecords().filter(r=>r.sourceFieldId===id).length;return{f,id,value,note,flag,photos}}).filter(x=>x.value||x.note||x.flag||x.photos)}
 function summaryBlockText(tabs){const lines=[];tabs.forEach(tab=>{const rows=summaryRows(tab);if(!rows.length)return;lines.push(tab.toUpperCase());rows.forEach(x=>{let line=`${fieldLabel(x.f)}: ${x.value||'—'}`;if(x.note)line+=` | Note: ${x.note}`;if(x.flag)line+=' | FOLLOW-UP';if(x.photos)line+=` | ${x.photos} photo(s)`;lines.push(line)});lines.push('')});return lines.join('\n').trim()}
 async function copySummaryText(text,button){try{await navigator.clipboard.writeText(text);const old=button.textContent;button.textContent='✓ Copied';setTimeout(()=>button.textContent=old,1200)}catch(_){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
 function footprintHasContent(){return !!(state.footprint&&Array.isArray(state.footprint.strokes)&&state.footprint.strokes.length)}
@@ -375,34 +425,114 @@ function buildPrintSketchSectionHtml(){
 let printPhotoObjectUrls=[];
 async function buildPrintPhotosSectionHtml(){
   try{
-    const groups=[];
-    const collect=f=>{const metas=state.photos[f['Field ID']]||[];if(metas.length)groups.push({label:fieldLabel(f),metas})};
-    CFG.app.forEach(f=>{if(isFieldCurrentlyVisible(f))collect(f)});
-    const activeGroups=activeFollowGroups();
-    CFG.followups.forEach(f=>{if(activeGroups.has(f['Follow-Up Group'])&&ruleVisible(f['Resolved Visibility Rule']))collect(f)});
-    if(!groups.length)return'';
+    const records=ensurePhotoRecords().slice().sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+    if(!records.length)return'';
 
     printPhotoObjectUrls.forEach(u=>{try{URL.revokeObjectURL(u)}catch(_){}});
     printPhotoObjectUrls=[];
 
-    const blockHtmls=[];
-    for(const g of groups){
-      const tiles=[];
-      for(const meta of g.metas){
-        if(!meta.photoId)continue;
-        let rec;try{rec=await getPhotoBlob(meta.photoId)}catch(_){rec=null}
-        if(!rec||!rec.blob)continue;
-        const url=URL.createObjectURL(rec.blob);
-        printPhotoObjectUrls.push(url);
-        tiles.push(`<div class="print-photo"><img src="${url}" alt=""></div>`);
-      }
-      if(tiles.length)blockHtmls.push(`<div class="print-photo-block"><h3>${esc(g.label)}</h3><div class="print-photo-grid">${tiles.join('')}</div></div>`);
+    const tiles=[];
+    for(const rec of records){
+      let blobRec;try{blobRec=await getPhotoBlob(rec.imageReference||rec.id)}catch(_){blobRec=null}
+      if(!blobRec||!blobRec.blob)continue;
+      const url=URL.createObjectURL(blobRec.blob);
+      printPhotoObjectUrls.push(url);
+      const label=photoDisplayLabel(rec),caption=String(rec.caption||'').trim();
+      tiles.push(`<div class="print-photo"><b class="print-photo-label">${esc(label)}</b><img src="${url}" alt="">${caption?`<div class="print-photo-caption">${esc(caption)}</div>`:''}</div>`);
     }
-    if(!blockHtmls.length)return'';
-    return`<section class="office-section print-photo-section" id="printPhotoSection"><h3 class="print-photo-section-title">Photos</h3>${blockHtmls.join('')}</section>`;
+    if(!tiles.length)return'';
+    return`<section class="office-section print-photo-section" id="printPhotoSection"><h3 class="print-photo-section-title">Photos</h3><div class="print-photo-grid">${tiles.join('')}</div></section>`;
   }catch(_){return''}
 }
-function renderOfficeSummary(){const tabs=(CFG.navigation||[]).filter(t=>!['Sketch','Photos','Exit Interview','Review','Office Summary'].includes(t));const address=summaryValue(state.values.address)||'Untitled property';const activeGroups=activeFollowGroups();const followRows=CFG.followups.filter(f=>activeGroups.has(f['Follow-Up Group'])&&ruleVisible(f['Resolved Visibility Rule'])).map(f=>({f,id:f['Field ID'],value:summaryValue(state.values[f['Field ID']]),note:String(state.notes[f['Field ID']]||'').trim(),flag:!!state.flags[f['Field ID']]})).filter(x=>x.value||x.note||x.flag);const flags=[...CFG.app,...CFG.followups].filter(f=>state.flags[f['Field ID']]);const incomplete=[...CFG.app,...CFG.followups].filter(f=>truth(f.Required)&&ruleVisible(f['Resolved Visibility Rule'])&&!hasMeaningfulValue(state.values[f['Field ID']]));const conditionTabs=['Exterior','Interior','Mechanical'];const propertyText=summaryBlockText(['Property','Site']);const conditionText=summaryBlockText(conditionTabs);const followText=[...flags.map(f=>`${fieldLabel(f)}${state.notes[f['Field ID']]?': '+state.notes[f['Field ID']]:''}`),...followRows.map(x=>`${fieldLabel(x.f)}: ${x.value||x.note||'Follow-up required'}`)].filter((x,i,a)=>a.indexOf(x)===i).join('\n');let sections='';tabs.forEach(tab=>{const rows=summaryRows(tab);if(!rows.length)return;sections+=`<section class="office-section"><h3>${esc(tab)}</h3><div class="office-rows">${rows.map(x=>`<div class="office-row ${x.flag?'office-flagged':''} ${x.note?'has-note':''}"><div><b>${esc(fieldLabel(x.f))}</b>${x.value?`<span>${esc(x.value)}</span>`:''}${x.note?`<small>${esc(x.note)}</small>`:''}</div><div class="office-meta">${x.photos?`📷 ${x.photos}`:''}${x.flag?' ⚑':''}</div></div>`).join('')}</div></section>`});const printDate=new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});$('#screen').innerHTML=`<div class="print-header"><b>Clipboard Inspection Summary</b><span>${esc(address)}</span><span>Printed ${esc(printDate)}</span><span>Version ${esc(CFG.settings.Version||'')}</span></div><div class="office-header"><div><h2>Office Summary</h2><b>${esc(address)}</b><span>Capture once in the field; copy directly into the workfile.</span></div><button class="action secondary" id="printSummary">Print / PDF</button></div><div class="office-stats"><div><b>${Number(state.values.bedroom_count||0)}</b><span>Beds</span></div><div><b>${Number(state.values.full_bath_count||0)}</b><span>Full Baths</span></div><div><b>${Number(state.values.half_bath_count||0)}</b><span>Half Baths</span></div><div><b>${Object.values(state.photos).reduce((a,b)=>a+b.length,0)}</b><span>Photos</span></div></div><div class="copy-grid"><button class="action" id="copyProperty">Copy Property + Site</button><button class="action" id="copyCondition">Copy Condition + Updates</button><button class="action" id="copyFollow">Copy Deficiencies + Follow-ups</button><button class="action secondary" id="copyAll">Copy Complete Summary</button></div>${incomplete.length?`<div class="office-alert"><b>${incomplete.length} required item(s) incomplete</b><span>${incomplete.slice(0,8).map(fieldLabel).map(esc).join(' • ')}</span></div>`:''}${sections}${followRows.length||flags.length?`<section class="office-section follow-section"><h3>Deficiencies & Follow-ups</h3>${(followText||'No follow-up details entered.').split('\n').map(x=>`<div class="follow-line">${esc(x)}</div>`).join('')}</section>`:''}<div class="actions"><button class="action secondary" id="exportOfficeJson">Export Inspection JSON</button></div>`;$('#copyProperty').onclick=e=>copySummaryText(propertyText,e.currentTarget);$('#copyCondition').onclick=e=>copySummaryText(conditionText,e.currentTarget);$('#copyFollow').onclick=e=>copySummaryText(followText||'No deficiencies or follow-ups recorded.',e.currentTarget);$('#copyAll').onclick=e=>copySummaryText(summaryBlockText(tabs)+(followText?`\n\nDEFICIENCIES & FOLLOW-UPS\n${followText}`:''),e.currentTarget);$('#printSummary').onclick=async()=>{
+let photosPageObjectUrls=[];
+function photoThumbHtml(r){
+  const label=photoDisplayLabel(r),sub=r.sourceFieldLabel||r.category||'',hasCaption=!!(r.caption&&String(r.caption).trim());
+  return`<button type="button" class="photo-thumb" data-photo-id="${esc(r.id)}"><span class="photo-thumb-img"><img data-thumb-for="${esc(r.id)}" alt=""></span><span class="photo-thumb-label">${esc(label)}</span>${sub?`<span class="photo-thumb-sub">${esc(sub)}</span>`:''}${hasCaption?'<span class="photo-thumb-caption-flag" title="Has a caption">📝</span>':''}</button>`;
+}
+async function populatePhotoThumbnails(){
+  photosPageObjectUrls.forEach(u=>{try{URL.revokeObjectURL(u)}catch(_){}});
+  photosPageObjectUrls=[];
+  for(const img of[...document.querySelectorAll('[data-thumb-for]')]){
+    let rec;try{rec=await getPhotoBlob(img.dataset.thumbFor)}catch(_){rec=null}
+    if(rec&&rec.blob){const url=URL.createObjectURL(rec.blob);photosPageObjectUrls.push(url);img.src=url}
+  }
+}
+function wirePhotosGrid(){document.querySelectorAll('.photo-thumb').forEach(b=>b.onclick=()=>openPhotoEditor(b.dataset.photoId))}
+function renderPhotosPage(){
+  const fieldsHtml=fieldTabHtml('Photos');
+  const records=ensurePhotoRecords().slice().sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+  const grid=records.length?`<div class="photos-grid">${records.map(photoThumbHtml).join('')}</div>`:'<div class="empty">No photos captured yet.</div>';
+  $('#screen').innerHTML=`${fieldsHtml}<h2 class="section-title">All Photos</h2>${grid}`;
+  wireFields();
+  wirePhotosGrid();
+  populatePhotoThumbnails();
+}
+function closePhotoEditor(){const el=$('#photoEditor');if(el)el.remove()}
+function openPhotoFullscreen(url){
+  if(!url)return;
+  const old=$('#photoFullscreen');if(old)old.remove();
+  const backdrop=document.createElement('div');
+  backdrop.id='photoFullscreen';backdrop.className='photo-fullscreen-backdrop';
+  backdrop.innerHTML=`<img src="${url}" alt="">`;
+  backdrop.onclick=()=>backdrop.remove();
+  document.body.appendChild(backdrop);
+}
+function movePhotoOrder(id,dir){
+  const records=ensurePhotoRecords().slice().sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+  const i=records.findIndex(r=>r.id===id),j=i+dir;
+  if(i<0||j<0||j>=records.length)return;
+  const tmp=records[i].order;records[i].order=records[j].order;records[j].order=tmp;
+  save();closePhotoEditor();render();
+}
+async function openPhotoEditor(id){
+  const rec=ensurePhotoRecords().find(r=>r.id===id);
+  if(!rec)return;
+  let blobRec;try{blobRec=await getPhotoBlob(rec.imageReference||rec.id)}catch(_){blobRec=null}
+  const imgUrl=blobRec&&blobRec.blob?URL.createObjectURL(blobRec.blob):'';
+  const old=$('#photoEditor');if(old)old.remove();
+  const fieldOptions=['<option value="">— Free Photo (no field) —</option>'].concat(CFG.app.filter(f=>f['Field ID']).map(f=>`<option value="${esc(f['Field ID'])}" ${rec.sourceFieldId===f['Field ID']?'selected':''}>${esc(fieldLabel(f))}</option>`));
+  const backdrop=document.createElement('div');
+  backdrop.id='photoEditor';backdrop.className='photo-editor-backdrop';
+  backdrop.innerHTML=`<div class="photo-editor-card">
+    <button type="button" class="dev-diag-close" id="peClose">×</button>
+    <img class="photo-editor-preview" src="${imgUrl}" alt="">
+    <label class="pe-field">Label<input type="text" id="peLabel" value="${esc(rec.customLabel||'')}" placeholder="${esc(rec.defaultLabel||'Additional Photo')}"></label>
+    <label class="pe-field">Caption<textarea id="peCaption" placeholder="Optional longer caption">${esc(rec.caption||'')}</textarea></label>
+    <label class="pe-field">Field / Category<select id="peField">${fieldOptions.join('')}</select></label>
+    <div class="pe-actions"><button type="button" class="action secondary" id="peMoveEarlier">◀ Earlier</button><button type="button" class="action secondary" id="peMoveLater">Later ▶</button></div>
+    <div class="pe-actions"><label class="action secondary">Replace Photo<input type="file" accept="image/*" id="peReplace" hidden></label><button type="button" class="action secondary" id="peFullscreen">View Full Screen</button></div>
+    <div class="pe-actions"><button type="button" class="action danger" id="peDelete">Delete Photo</button><button type="button" class="action" id="peDone">Done</button></div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.onclick=e=>{if(e.target===backdrop)closePhotoEditor()};
+  $('#peClose').onclick=closePhotoEditor;
+  $('#peDone').onclick=()=>{closePhotoEditor();render()};
+  $('#peLabel').oninput=()=>{rec.customLabel=$('#peLabel').value;save()};
+  $('#peCaption').oninput=()=>{rec.caption=$('#peCaption').value;save()};
+  $('#peField').onchange=()=>{
+    const fid=$('#peField').value;
+    if(fid){const f=CFG.app.find(x=>x['Field ID']===fid);rec.sourceFieldId=fid;rec.sourceFieldLabel=fieldLabel(f);rec.category=f.Section||f.Tab||'';rec.defaultLabel=deriveDefaultLabel(rec.sourceFieldLabel)}
+    else{rec.sourceFieldId=null;rec.sourceFieldLabel='';rec.category='';if(!String(rec.defaultLabel||'').startsWith('Additional Photo'))rec.defaultLabel=`Additional Photo ${ensurePhotoRecords().filter(r=>!r.sourceFieldId).length}`}
+    save();updateBadges();
+  };
+  $('#peMoveEarlier').onclick=()=>movePhotoOrder(rec.id,-1);
+  $('#peMoveLater').onclick=()=>movePhotoOrder(rec.id,1);
+  $('#peFullscreen').onclick=()=>openPhotoFullscreen(imgUrl);
+  $('#peReplace').onchange=async e=>{
+    const file=e.target.files&&e.target.files[0];if(!file)return;
+    try{await savePhotoBlob({id:rec.imageReference||rec.id,blob:file,name:file.name,type:file.type,size:file.size,lastModified:file.lastModified||0})}
+    catch(_){showToast('Photo could not be replaced');return}
+    rec.name=file.name;rec.type=file.type;rec.size=file.size;
+    save();closePhotoEditor();render();
+  };
+  $('#peDelete').onclick=async()=>{
+    if(!confirm('Delete this photo?'))return;
+    try{await deletePhotoBlob(rec.imageReference||rec.id)}catch(_){}
+    state.photoRecords=ensurePhotoRecords().filter(r=>r.id!==rec.id);
+    save();updateBadges();closePhotoEditor();render();
+  };
+}
+function renderOfficeSummary(){const tabs=(CFG.navigation||[]).filter(t=>!['Sketch','Photos','Exit Interview','Review','Office Summary'].includes(t));const address=summaryValue(state.values.address)||'Untitled property';const activeGroups=activeFollowGroups();const followRows=CFG.followups.filter(f=>activeGroups.has(f['Follow-Up Group'])&&ruleVisible(f['Resolved Visibility Rule'])).map(f=>({f,id:f['Field ID'],value:summaryValue(state.values[f['Field ID']]),note:String(state.notes[f['Field ID']]||'').trim(),flag:!!state.flags[f['Field ID']]})).filter(x=>x.value||x.note||x.flag);const flags=[...CFG.app,...CFG.followups].filter(f=>state.flags[f['Field ID']]);const incomplete=[...CFG.app,...CFG.followups].filter(f=>truth(f.Required)&&ruleVisible(f['Resolved Visibility Rule'])&&!hasMeaningfulValue(state.values[f['Field ID']]));const conditionTabs=['Exterior','Interior','Mechanical'];const propertyText=summaryBlockText(['Property','Site']);const conditionText=summaryBlockText(conditionTabs);const followText=[...flags.map(f=>`${fieldLabel(f)}${state.notes[f['Field ID']]?': '+state.notes[f['Field ID']]:''}`),...followRows.map(x=>`${fieldLabel(x.f)}: ${x.value||x.note||'Follow-up required'}`)].filter((x,i,a)=>a.indexOf(x)===i).join('\n');let sections='';tabs.forEach(tab=>{const rows=summaryRows(tab);if(!rows.length)return;sections+=`<section class="office-section"><h3>${esc(tab)}</h3><div class="office-rows">${rows.map(x=>`<div class="office-row ${x.flag?'office-flagged':''} ${x.note?'has-note':''}"><div><b>${esc(fieldLabel(x.f))}</b>${x.value?`<span>${esc(x.value)}</span>`:''}${x.note?`<small>${esc(x.note)}</small>`:''}</div><div class="office-meta">${x.photos?`📷 ${x.photos}`:''}${x.flag?' ⚑':''}</div></div>`).join('')}</div></section>`});const printDate=new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});$('#screen').innerHTML=`<div class="print-header"><b>Clipboard Inspection Summary</b><span>${esc(address)}</span><span>Printed ${esc(printDate)}</span><span>Version ${esc(CFG.settings.Version||'')}</span></div><div class="office-header"><div><h2>Office Summary</h2><b>${esc(address)}</b><span>Capture once in the field; copy directly into the workfile.</span></div><button class="action secondary" id="printSummary">Print / PDF</button></div><div class="office-stats"><div><b>${Number(state.values.bedroom_count||0)}</b><span>Beds</span></div><div><b>${Number(state.values.full_bath_count||0)}</b><span>Full Baths</span></div><div><b>${Number(state.values.half_bath_count||0)}</b><span>Half Baths</span></div><div><b>${ensurePhotoRecords().length}</b><span>Photos</span></div></div><div class="copy-grid"><button class="action" id="copyProperty">Copy Property + Site</button><button class="action" id="copyCondition">Copy Condition + Updates</button><button class="action" id="copyFollow">Copy Deficiencies + Follow-ups</button><button class="action secondary" id="copyAll">Copy Complete Summary</button></div>${incomplete.length?`<div class="office-alert"><b>${incomplete.length} required item(s) incomplete</b><span>${incomplete.slice(0,8).map(fieldLabel).map(esc).join(' • ')}</span></div>`:''}${sections}${followRows.length||flags.length?`<section class="office-section follow-section"><h3>Deficiencies & Follow-ups</h3>${(followText||'No follow-up details entered.').split('\n').map(x=>`<div class="follow-line">${esc(x)}</div>`).join('')}</section>`:''}<div class="actions"><button class="action secondary" id="exportOfficeJson">Export Inspection JSON</button></div>`;$('#copyProperty').onclick=e=>copySummaryText(propertyText,e.currentTarget);$('#copyCondition').onclick=e=>copySummaryText(conditionText,e.currentTarget);$('#copyFollow').onclick=e=>copySummaryText(followText||'No deficiencies or follow-ups recorded.',e.currentTarget);$('#copyAll').onclick=e=>copySummaryText(summaryBlockText(tabs)+(followText?`\n\nDEFICIENCIES & FOLLOW-UPS\n${followText}`:''),e.currentTarget);$('#printSummary').onclick=async()=>{
   await new Promise(res=>stopDictation(res));
   if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
   save();
@@ -428,7 +558,7 @@ function renderReview(){
   let items=[];
   allVisible.forEach(f=>{let id=f['Field ID'],v=state.values[id],empty=v===undefined||v===''||(Array.isArray(v)&&!v.length);if(truth(f.Required)&&empty)items.push({level:'error',id,title:fieldLabel(f),reason:'Required response is incomplete.',tab:fieldLocation(f),section:f.Section||f['Follow-Up Group']||''})});
   allVisible.forEach(f=>{let id=f['Field ID'];if(state.flags[id])items.push({level:'warning',id,title:fieldLabel(f),reason:state.notes[id]&&String(state.notes[id]).trim()?`Flagged: ${String(state.notes[id]).trim()}`:'Flagged during the inspection. Open the item to review or clear the flag.',tab:fieldLocation(f),section:f.Section||f['Follow-Up Group']||''})});
-  let notes=Object.values(state.notes).filter(v=>String(v).trim()).length,flags=Object.values(state.flags).filter(Boolean).length,photos=Object.values(state.photos).reduce((a,b)=>a+b.length,0);
+  let notes=Object.values(state.notes).filter(v=>String(v).trim()).length,flags=Object.values(state.flags).filter(Boolean).length,photos=ensurePhotoRecords().length;
   let errors=items.filter(x=>x.level==='error').length,warnings=items.filter(x=>x.level==='warning').length;
   $('#screen').innerHTML=`<h2 class="section-title">Inspection Review</h2><div class="review-summary"><div><b>${errors}</b><span>Incomplete</span></div><div><b>${warnings}</b><span>Flagged</span></div><div><b>${notes}</b><span>Notes</span></div><div><b>${photos}</b><span>Photos</span></div></div>${items.length?`<div class="review-heading"><b>Items requiring review</b><span>Tap an item to open it</span></div><div class="review-items">${items.map(reviewItemHtml).join('')}</div>`:'<div class="success review-complete"><b>✓ Inspection review complete</b><br>No required or flagged items are outstanding.</div>'}<div class="review-card"><b>Inspection totals</b><div class="review-line"><span>Bedrooms</span><b>${Number(state.values.bedroom_count||0)}</b></div><div class="review-line"><span>Full bathrooms</span><b>${Number(state.values.full_bath_count||0)}</b></div><div class="review-line"><span>Half bathrooms</span><b>${Number(state.values.half_bath_count||0)}</b></div><div class="review-line"><span>Smoke / CO detectors</span><b>${Number(state.values.smoke_co_count||0)}</b></div></div><div class="review-card"><b>Exit Interview groups</b><div class="small">${[...activeGroups].map(esc).join(' • ')}</div></div><div class="actions"><button class="action" id="exportBtn">Export JSON</button><button class="action secondary" id="resetBtn">Reset Inspection</button></div>`;
   document.querySelectorAll('[data-review-id]').forEach(b=>b.onclick=()=>goToReviewField(b.dataset.reviewTab,b.dataset.reviewId));
