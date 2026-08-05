@@ -449,7 +449,7 @@ function renderFootprintExportImage(){
   const pad=40,w=Math.max(1,maxX-minX)+pad*2,h=Math.max(1,maxY-minY)+pad*2,scale=Math.min(2,2200/Math.max(w,h));
   const c=document.createElement('canvas');c.width=Math.round(w*scale);c.height=Math.round(h*scale);
   const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
-  x.save();x.scale(scale,scale);x.translate(pad-minX,pad-minY);x.lineCap='round';x.lineJoin='round';x.strokeStyle='#17324d';x.lineWidth=4;
+  x.save();x.scale(scale,scale);x.translate(pad-minX,pad-minY);x.lineCap='round';x.lineJoin='round';x.strokeStyle='#17324d';
   strokes.forEach(s=>fpDrawStroke(x,s));
   x.restore();
   return c.toDataURL('image/png');
@@ -718,8 +718,56 @@ function wireFieldSketch(){const p=fsPage(),c=$('#fieldSketchCanvas'),stage=$('#
 /* Footprint — Stage 1 isolated prototype. Own state (state.footprint), own DOM, own
    canvas. Never reads CFG, never touches state.sketch or state.fieldSketch. Sketch tab
    and the fs* engine above are untouched and remain fully functional. */
-let fpTool='pencil',fpDraft=null,fpUndo=[],fpRedo=[],fpPointers=new Map(),fpGesture=null,fpDrag=null,fpResizeObserver=null,fpWheelSaveTimer=null;
+let fpTool='pencil',fpDraft=null,fpUndo=[],fpRedo=[],fpPointers=new Map(),fpGesture=null,fpDrag=null,fpResizeObserver=null,fpWheelSaveTimer=null,fpPencilPressTimer=null,fpPencilLongPressed=false;
 const FP_MIN_SCALE=.1,FP_MAX_SCALE=8,FP_LINE_WIDTH=4;
+/* Grid and line-thickness are device/user drawing preferences, not
+   inspection data -- stored in their own localStorage keys (like Developer
+   Diagnostics) so Reset Inspection never touches them and they don't
+   bloat the exported inspection JSON. */
+const FP_WIDTH_OPTIONS={thin:2,medium:4,thick:7};
+const FP_GRID_MINOR=40,FP_GRID_MAJOR_EVERY=5;
+let fpGridOn=localStorage.getItem('clipboard-fp-grid')!=='0';
+let fpLineWidthKey=localStorage.getItem('clipboard-fp-linewidth')||'medium';
+if(!FP_WIDTH_OPTIONS[fpLineWidthKey])fpLineWidthKey='medium';
+function fpSetGridOn(on){fpGridOn=on;localStorage.setItem('clipboard-fp-grid',on?'1':'0');fpDraw()}
+function fpSetLineWidth(key){if(!FP_WIDTH_OPTIONS[key])return;fpLineWidthKey=key;localStorage.setItem('clipboard-fp-linewidth',key)}
+function fpDrawGrid(x,c,v){
+  const L=-v.x/v.scale,R=(c.width-v.x)/v.scale,T=-v.y/v.scale,B=(c.height-v.y)/v.scale,step=FP_GRID_MINOR;
+  const startCol=Math.floor(L/step),endCol=Math.ceil(R/step),startRow=Math.floor(T/step),endRow=Math.ceil(B/step);
+  if((endCol-startCol)>400||(endRow-startRow)>400)return;
+  x.save();
+  x.beginPath();
+  for(let col=startCol;col<=endCol;col++){if(col%FP_GRID_MAJOR_EVERY===0)continue;const wx=col*step;x.moveTo(wx,T);x.lineTo(wx,B)}
+  for(let row=startRow;row<=endRow;row++){if(row%FP_GRID_MAJOR_EVERY===0)continue;const wy=row*step;x.moveTo(L,wy);x.lineTo(R,wy)}
+  x.strokeStyle='rgba(23,50,77,.07)';x.lineWidth=1/v.scale;x.stroke();
+  x.beginPath();
+  for(let col=startCol;col<=endCol;col++){if(col%FP_GRID_MAJOR_EVERY!==0)continue;const wx=col*step;x.moveTo(wx,T);x.lineTo(wx,B)}
+  for(let row=startRow;row<=endRow;row++){if(row%FP_GRID_MAJOR_EVERY!==0)continue;const wy=row*step;x.moveTo(L,wy);x.lineTo(R,wy)}
+  x.strokeStyle='rgba(23,50,77,.16)';x.lineWidth=1/v.scale;x.stroke();
+  x.restore();
+}
+function closeFpSettings(){const el=$('#fpSettingsPanel');if(el)el.remove()}
+function openFpSettings(){
+  closeFpSettings();
+  const backdrop=document.createElement('div');
+  backdrop.id='fpSettingsPanel';backdrop.className='dev-diag-backdrop';
+  backdrop.innerHTML=`<div class="dev-diag-card fp-settings-card">
+    <button type="button" class="dev-diag-close" id="fpSettingsClose">×</button>
+    <b class="fp-settings-title">Drawing Settings</b>
+    <div class="fp-settings-row"><span>Grid</span><div class="fp-settings-toggle">
+      <button type="button" data-fp-grid="1" class="fp-toggle-btn ${fpGridOn?'active':''}">On</button>
+      <button type="button" data-fp-grid="0" class="fp-toggle-btn ${!fpGridOn?'active':''}">Off</button>
+    </div></div>
+    <div class="fp-settings-row"><span>Line Thickness</span><div class="fp-settings-toggle">
+      ${Object.keys(FP_WIDTH_OPTIONS).map(k=>`<button type="button" data-fp-width="${k}" class="fp-toggle-btn ${fpLineWidthKey===k?'active':''}">${k.charAt(0).toUpperCase()+k.slice(1)}</button>`).join('')}
+    </div></div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.onclick=e=>{if(e.target===backdrop)closeFpSettings()};
+  $('#fpSettingsClose').onclick=closeFpSettings;
+  backdrop.querySelectorAll('[data-fp-grid]').forEach(b=>b.onclick=()=>{fpSetGridOn(b.dataset.fpGrid==='1');openFpSettings()});
+  backdrop.querySelectorAll('[data-fp-width]').forEach(b=>b.onclick=()=>{fpSetLineWidth(b.dataset.fpWidth);openFpSettings()});
+}
 function ensureFootprint(){if(!state.footprint||!Array.isArray(state.footprint.strokes))state.footprint={strokes:[],viewport:{scale:1,x:0,y:0}};if(!state.footprint.viewport)state.footprint.viewport={scale:1,x:0,y:0};return state.footprint}
 function fpSnapshot(){return JSON.parse(JSON.stringify(ensureFootprint()))}
 function fpCommit(){fpUndo.push(fpSnapshot());if(fpUndo.length>60)fpUndo.shift();fpRedo=[]}
@@ -730,22 +778,32 @@ function fpWorld(clientX,clientY){const q=fpScreen(clientX,clientY),v=ensureFoot
 function fpSizeCanvas(){const c=$('#footprintCanvas'),stage=$('#fpStage');if(!c||!stage)return false;const r=stage.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));if(c.width===w&&c.height===h)return false;c.width=w;c.height=h;return true}
 function fpDistanceToSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy,t=l2?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l2)):0;return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
 function fpHit(p){const v=ensureFootprint(),scale=v.viewport.scale||1,tol=16/scale,arr=[...v.strokes].reverse();for(const s of arr){const pts=s.points||[];if(pts.length===1){if(Math.hypot(p.x-pts[0].x,p.y-pts[0].y)<tol)return s;continue}for(let i=1;i<pts.length;i++)if(fpDistanceToSegment(p,pts[i-1],pts[i])<tol)return s}return null}
-function fpDrawStroke(x,s){if(!s.points||!s.points.length)return;x.beginPath();if(s.points.length===1){x.moveTo(s.points[0].x,s.points[0].y);x.lineTo(s.points[0].x+.01,s.points[0].y+.01)}else{x.moveTo(s.points[0].x,s.points[0].y);for(let i=1;i<s.points.length;i++)x.lineTo(s.points[i].x,s.points[i].y)}x.stroke()}
-function fpDraw(){const c=$('#footprintCanvas');if(!c)return;const x=c.getContext('2d'),v=ensureFootprint().viewport;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.save();x.translate(v.x,v.y);x.scale(v.scale,v.scale);x.lineCap='round';x.lineJoin='round';x.strokeStyle='#17324d';x.lineWidth=FP_LINE_WIDTH;for(const s of ensureFootprint().strokes)fpDrawStroke(x,s);if(fpDraft)fpDrawStroke(x,fpDraft);x.restore()}
+function fpDrawStroke(x,s){if(!s.points||!s.points.length)return;x.lineWidth=s.width||FP_LINE_WIDTH;x.beginPath();if(s.points.length===1){x.moveTo(s.points[0].x,s.points[0].y);x.lineTo(s.points[0].x+.01,s.points[0].y+.01)}else{x.moveTo(s.points[0].x,s.points[0].y);for(let i=1;i<s.points.length;i++)x.lineTo(s.points[i].x,s.points[i].y)}x.stroke()}
+function fpDraw(){const c=$('#footprintCanvas');if(!c)return;const x=c.getContext('2d'),v=ensureFootprint().viewport;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.save();x.translate(v.x,v.y);x.scale(v.scale,v.scale);if(fpGridOn)fpDrawGrid(x,c,v);x.lineCap='round';x.lineJoin='round';x.strokeStyle='#17324d';for(const s of ensureFootprint().strokes)fpDrawStroke(x,s);if(fpDraft)fpDrawStroke(x,fpDraft);x.restore()}
 function fpZoomAt(clientX,clientY,mult){const v=ensureFootprint().viewport,q=fpScreen(clientX,clientY),old=v.scale,ns=Math.max(FP_MIN_SCALE,Math.min(FP_MAX_SCALE,old*mult)),wx=(q.x-v.x)/old,wy=(q.y-v.y)/old;v.scale=ns;v.x=q.x-wx*ns;v.y=q.y-wy*ns;fpDraw()}
 function fpSetTool(t){fpTool=t;const menu=$('#fpOverflow');if(menu)menu.hidden=true;document.querySelectorAll('[data-fp-tool]').forEach(b=>b.classList.toggle('active',b.dataset.fpTool===t))}
 function fpUndoAction(){if(!fpUndo.length)return;fpRedo.push(fpSnapshot());state.footprint=fpUndo.pop();save();fpDraw()}
 function fpRedoAction(){if(!fpRedo.length)return;fpUndo.push(fpSnapshot());state.footprint=fpRedo.pop();save();fpDraw()}
 function fpClearCanvas(){fpCommit();ensureFootprint().strokes=[];save();fpDraw()}
-function renderFootprint(){ensureFootprint();$('#screen').innerHTML=`<h2 class="section-title">Footprint <span class="version-chip">Stage 1 Prototype</span></h2><div class="fp-card"><div class="fp-toolbar" id="fpToolbar"><button data-fp-tool="pencil" class="fp-btn active" title="Pencil">✏<span>Pencil</span></button><button data-fp-tool="eraser" class="fp-btn" title="Eraser">⌫<span>Eraser</span></button><button id="fpUndoBtn" class="fp-btn" title="Undo">↶<span>Undo</span></button><button data-fp-tool="hand" class="fp-btn" title="Pan">✋<span>Pan</span></button><button id="fpMoreBtn" class="fp-btn fp-more" title="More">⋯<span>More</span></button></div><div class="fp-overflow" id="fpOverflow" hidden><button id="fpRedoBtn" class="fp-overflow-btn">↷ Redo</button><button id="fpClearBtn" class="fp-overflow-btn danger">Clear Canvas</button></div><div class="fp-stage" id="fpStage"><canvas id="footprintCanvas"></canvas></div></div>`;wireFootprint()}
+function renderFootprint(){ensureFootprint();$('#screen').innerHTML=`<h2 class="section-title">Footprint <span class="version-chip">Stage 1 Prototype</span></h2><div class="fp-card"><div class="fp-toolbar" id="fpToolbar"><button data-fp-tool="pencil" class="fp-btn active" title="Pencil">✏<span>Pencil</span></button><button data-fp-tool="eraser" class="fp-btn" title="Eraser">⌫<span>Eraser</span></button><button id="fpUndoBtn" class="fp-btn" title="Undo">↶<span>Undo</span></button><button data-fp-tool="hand" class="fp-btn" title="Pan">✋<span>Pan</span></button><button id="fpMoreBtn" class="fp-btn fp-more" title="More">⋯<span>More</span></button></div><div class="fp-overflow" id="fpOverflow" hidden><button id="fpRedoBtn" class="fp-overflow-btn">↷ Redo</button><button id="fpSettingsBtn" class="fp-overflow-btn">⚙ Drawing Settings</button><button id="fpClearBtn" class="fp-overflow-btn danger">Clear Canvas</button></div><div class="fp-stage" id="fpStage"><canvas id="footprintCanvas"></canvas></div></div>`;wireFootprint()}
 function wireFootprint(){
  const c=$('#footprintCanvas'),stage=$('#fpStage');
  fpSizeCanvas();fpSetTool(fpTool);fpDraw();
- document.querySelectorAll('[data-fp-tool]').forEach(b=>b.onclick=()=>fpSetTool(b.dataset.fpTool));
+ document.querySelectorAll('[data-fp-tool]').forEach(b=>b.onclick=()=>{if(fpPencilLongPressed){fpPencilLongPressed=false;return}fpSetTool(b.dataset.fpTool)});
  $('#fpUndoBtn').onclick=fpUndoAction;
  $('#fpRedoBtn').onclick=fpRedoAction;
  $('#fpClearBtn').onclick=()=>{$('#fpOverflow').hidden=true;fpClearCanvas()};
+ $('#fpSettingsBtn').onclick=()=>{$('#fpOverflow').hidden=true;openFpSettings()};
  $('#fpMoreBtn').onclick=()=>{const m=$('#fpOverflow');m.hidden=!m.hidden};
+ const pencilBtn=document.querySelector('[data-fp-tool="pencil"]');
+ if(pencilBtn){
+  const startPress=()=>{fpPencilLongPressed=false;clearTimeout(fpPencilPressTimer);fpPencilPressTimer=setTimeout(()=>{fpPencilLongPressed=true;openFpSettings()},500)};
+  const cancelPress=()=>clearTimeout(fpPencilPressTimer);
+  pencilBtn.addEventListener('pointerdown',startPress);
+  pencilBtn.addEventListener('pointerup',cancelPress);
+  pencilBtn.addEventListener('pointerleave',cancelPress);
+  pencilBtn.addEventListener('pointercancel',cancelPress);
+ }
  if(fpResizeObserver)fpResizeObserver.disconnect();
  if(window.ResizeObserver){fpResizeObserver=new ResizeObserver(()=>{if(fpSizeCanvas())fpDraw()});fpResizeObserver.observe(stage)}
  else window.addEventListener('resize',()=>{if(fpSizeCanvas())fpDraw()});
@@ -764,7 +822,7 @@ function wireFootprint(){
   const wp=fpWorld(e.clientX,e.clientY);
   if(fpTool==='hand'){const v=ensureFootprint().viewport;fpDrag={pointerId:e.pointerId,startX:sp.x,startY:sp.y,vx:v.x,vy:v.y};return}
   if(fpTool==='eraser'){const hit=fpHit(wp);if(hit){fpCommit();ensureFootprint().strokes=ensureFootprint().strokes.filter(s=>s!==hit);save();fpDraw()}fpDrag={pointerId:e.pointerId,erasing:true};return}
-  fpDraft={id:fpId(),points:[wp],pointerId:e.pointerId};
+  fpDraft={id:fpId(),points:[wp],pointerId:e.pointerId,width:FP_WIDTH_OPTIONS[fpLineWidthKey]};
  };
  const pointerMove=e=>{
   if(!fpPointers.has(e.pointerId))return;
