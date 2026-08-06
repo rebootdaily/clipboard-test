@@ -3992,7 +3992,8 @@
       "HVAC",
       "Water Heater",
       "Pool",
-      "Other"
+      "Other",
+      "Street Scene"
     ],
     "InformationSource": [
       "Owner",
@@ -4121,8 +4122,8 @@
   },
   "settings": {
     "App Name": "Clipboard",
-    "Version": "8.0.9",
-    "Workbook Role": "Live master configuration for Clipboard v8.0.9",
+    "Version": "8.0.11",
+    "Workbook Role": "Live master configuration for Clipboard v8.0.11",
     "Theme": "Light",
     "Large Text": "Yes",
     "Large Buttons": "Yes",

@@ -538,6 +538,21 @@ function movePhotoOrder(id,dir){
   const tmp=records[i].order;records[i].order=records[j].order;records[j].order=tmp;
   save();closePhotoEditor();render();
 }
+const PHOTO_QUICKLABEL_RECENT_KEY='clipboard-photo-quicklabel-recent';
+function getPhotoQuickLabels(){
+  const all=(CFG.lists&&CFG.lists.GuidedPhotoCategory)||[];
+  let recent=[];
+  try{recent=JSON.parse(localStorage.getItem(PHOTO_QUICKLABEL_RECENT_KEY)||'[]')}catch(_){recent=[]}
+  const recentValid=recent.filter(x=>all.includes(x));
+  const rest=all.filter(x=>!recentValid.includes(x));
+  return[...recentValid,...rest];
+}
+function recordPhotoQuickLabelUse(label){
+  let recent=[];
+  try{recent=JSON.parse(localStorage.getItem(PHOTO_QUICKLABEL_RECENT_KEY)||'[]')}catch(_){recent=[]}
+  recent=[label,...recent.filter(x=>x!==label)].slice(0,20);
+  localStorage.setItem(PHOTO_QUICKLABEL_RECENT_KEY,JSON.stringify(recent));
+}
 async function openPhotoEditor(id){
   const rec=ensurePhotoRecords().find(r=>r.id===id);
   if(!rec)return;
@@ -545,12 +560,15 @@ async function openPhotoEditor(id){
   const imgUrl=blobRec&&blobRec.blob?URL.createObjectURL(blobRec.blob):'';
   const old=$('#photoEditor');if(old)old.remove();
   const fieldOptions=['<option value="">— Free Photo (no field) —</option>'].concat(CFG.app.filter(f=>f['Field ID']).map(f=>`<option value="${esc(f['Field ID'])}" ${rec.sourceFieldId===f['Field ID']?'selected':''}>${esc(fieldLabel(f))}</option>`));
+  const currentLabelValue=String(rec.customLabel||'').trim();
+  const quickLabels=getPhotoQuickLabels();
   const backdrop=document.createElement('div');
   backdrop.id='photoEditor';backdrop.className='photo-editor-backdrop';
   backdrop.innerHTML=`<div class="photo-editor-card">
     <button type="button" class="dev-diag-close" id="peClose">×</button>
     <img class="photo-editor-preview" src="${imgUrl}" alt="">
     <label class="pe-field">Label<input type="text" id="peLabel" value="${esc(rec.customLabel||'')}" placeholder="${esc(rec.defaultLabel||'Additional Photo')}"></label>
+    ${quickLabels.length?`<div class="pe-chip-row" id="peChipRow">${quickLabels.map(c=>`<button type="button" class="pe-chip ${c===currentLabelValue?'active':''}" data-label="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
     <label class="pe-field">Caption<textarea id="peCaption" placeholder="Optional longer caption">${esc(rec.caption||'')}</textarea></label>
     <label class="pe-field">Field / Category<select id="peField">${fieldOptions.join('')}</select></label>
     <div class="pe-actions"><button type="button" class="action secondary" id="peMoveEarlier">◀ Earlier</button><button type="button" class="action secondary" id="peMoveLater">Later ▶</button></div>
@@ -562,6 +580,18 @@ async function openPhotoEditor(id){
   $('#peClose').onclick=closePhotoEditor;
   $('#peDone').onclick=()=>{closePhotoEditor();render()};
   $('#peLabel').oninput=()=>{rec.customLabel=$('#peLabel').value;save()};
+  backdrop.querySelectorAll('.pe-chip').forEach(chip=>{
+    chip.onclick=()=>{
+      const label=chip.dataset.label,input=$('#peLabel');
+      input.value=label;
+      rec.customLabel=label;
+      save();
+      recordPhotoQuickLabelUse(label);
+      backdrop.querySelectorAll('.pe-chip').forEach(c=>c.classList.toggle('active',c.dataset.label===label));
+      input.focus();
+      const len=input.value.length;input.setSelectionRange(len,len);
+    };
+  });
   $('#peCaption').oninput=()=>{rec.caption=$('#peCaption').value;save()};
   $('#peField').onchange=()=>{
     const fid=$('#peField').value;

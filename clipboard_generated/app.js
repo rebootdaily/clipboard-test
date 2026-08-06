@@ -88,7 +88,7 @@ function migrateLegacyPhotoMap(oldPhotos){
 }
 
 async function init(){
-  CFG=await fetch('config.json?v=8.0.9',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
+  CFG=await fetch('config.json?v=8.0.11',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`Unable to load config.json (${r.status})`);return r.json()});
   const defaults={};
   [...CFG.app,...CFG.followups].forEach(f=>{if(f['Default Value']!==undefined&&f['Default Value']!=='')defaults[f['Field ID']]=f['Default Value']});
   const saved=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('clipboard-v4-3-2-state')||localStorage.getItem('clipboard-v4-3-state')||localStorage.getItem('clipboard-v4-2-1-state')||localStorage.getItem('clipboard-v4-1-state')||localStorage.getItem('clipboard-v4-state');
@@ -538,6 +538,21 @@ function movePhotoOrder(id,dir){
   const tmp=records[i].order;records[i].order=records[j].order;records[j].order=tmp;
   save();closePhotoEditor();render();
 }
+const PHOTO_QUICKLABEL_RECENT_KEY='clipboard-photo-quicklabel-recent';
+function getPhotoQuickLabels(){
+  const all=(CFG.lists&&CFG.lists.GuidedPhotoCategory)||[];
+  let recent=[];
+  try{recent=JSON.parse(localStorage.getItem(PHOTO_QUICKLABEL_RECENT_KEY)||'[]')}catch(_){recent=[]}
+  const recentValid=recent.filter(x=>all.includes(x));
+  const rest=all.filter(x=>!recentValid.includes(x));
+  return[...recentValid,...rest];
+}
+function recordPhotoQuickLabelUse(label){
+  let recent=[];
+  try{recent=JSON.parse(localStorage.getItem(PHOTO_QUICKLABEL_RECENT_KEY)||'[]')}catch(_){recent=[]}
+  recent=[label,...recent.filter(x=>x!==label)].slice(0,20);
+  localStorage.setItem(PHOTO_QUICKLABEL_RECENT_KEY,JSON.stringify(recent));
+}
 async function openPhotoEditor(id){
   const rec=ensurePhotoRecords().find(r=>r.id===id);
   if(!rec)return;
@@ -545,12 +560,15 @@ async function openPhotoEditor(id){
   const imgUrl=blobRec&&blobRec.blob?URL.createObjectURL(blobRec.blob):'';
   const old=$('#photoEditor');if(old)old.remove();
   const fieldOptions=['<option value="">— Free Photo (no field) —</option>'].concat(CFG.app.filter(f=>f['Field ID']).map(f=>`<option value="${esc(f['Field ID'])}" ${rec.sourceFieldId===f['Field ID']?'selected':''}>${esc(fieldLabel(f))}</option>`));
+  const currentLabelValue=String(rec.customLabel||'').trim();
+  const quickLabels=getPhotoQuickLabels();
   const backdrop=document.createElement('div');
   backdrop.id='photoEditor';backdrop.className='photo-editor-backdrop';
   backdrop.innerHTML=`<div class="photo-editor-card">
     <button type="button" class="dev-diag-close" id="peClose">×</button>
     <img class="photo-editor-preview" src="${imgUrl}" alt="">
     <label class="pe-field">Label<input type="text" id="peLabel" value="${esc(rec.customLabel||'')}" placeholder="${esc(rec.defaultLabel||'Additional Photo')}"></label>
+    ${quickLabels.length?`<div class="pe-chip-row" id="peChipRow">${quickLabels.map(c=>`<button type="button" class="pe-chip ${c===currentLabelValue?'active':''}" data-label="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
     <label class="pe-field">Caption<textarea id="peCaption" placeholder="Optional longer caption">${esc(rec.caption||'')}</textarea></label>
     <label class="pe-field">Field / Category<select id="peField">${fieldOptions.join('')}</select></label>
     <div class="pe-actions"><button type="button" class="action secondary" id="peMoveEarlier">◀ Earlier</button><button type="button" class="action secondary" id="peMoveLater">Later ▶</button></div>
@@ -562,6 +580,18 @@ async function openPhotoEditor(id){
   $('#peClose').onclick=closePhotoEditor;
   $('#peDone').onclick=()=>{closePhotoEditor();render()};
   $('#peLabel').oninput=()=>{rec.customLabel=$('#peLabel').value;save()};
+  backdrop.querySelectorAll('.pe-chip').forEach(chip=>{
+    chip.onclick=()=>{
+      const label=chip.dataset.label,input=$('#peLabel');
+      input.value=label;
+      rec.customLabel=label;
+      save();
+      recordPhotoQuickLabelUse(label);
+      backdrop.querySelectorAll('.pe-chip').forEach(c=>c.classList.toggle('active',c.dataset.label===label));
+      input.focus();
+      const len=input.value.length;input.setSelectionRange(len,len);
+    };
+  });
   $('#peCaption').oninput=()=>{rec.caption=$('#peCaption').value;save()};
   $('#peField').onchange=()=>{
     const fid=$('#peField').value;
@@ -635,7 +665,7 @@ function fsCommit(){fsUndo.push(fsSnapshot());if(fsUndo.length>80)fsUndo.shift()
 function fsMetrics(){const c=$('#fieldSketchCanvas'),r=c.getBoundingClientRect();return{c,r,sx:c.width/r.width,sy:c.height/r.height}}
 function fsScreen(clientX,clientY){const {r,sx,sy}=fsMetrics();return{x:(clientX-r.left)*sx,y:(clientY-r.top)*sy}}
 function fsWorld(clientX,clientY){const q=fsScreen(clientX,clientY),v=fsPage().viewport;return{x:(q.x-v.x)/v.scale,y:(q.y-v.y)/v.scale}}
-function renderSketch(){const s=ensureFieldSketch(),p=fsPage();$('#screen').innerHTML=`<h2 class="section-title">Field Sketch <span class="version-chip">8.0.9 Stabilized Sketch</span></h2><div class="field-sketch-card"><div class="fs-page-row"><label>Sketch page<select id="fsPageSelect">${s.pages.map(x=>`<option value="${esc(x.id)}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><button class="action secondary" id="fsAddPage">+ Page</button><button class="action secondary danger" id="fsDeletePage">Delete</button></div><div class="fs-help"><b>Draw naturally. One finger or Pencil draws.</b><span>Two fingers pan and pinch-zoom. Select objects to move, resize, or edit.</span></div><div class="fs-toolbar" id="fsToolbar"><button data-fs-tool="select">☝<span>Select</span></button><button data-fs-tool="pencil">✏<span>Pencil</span></button><button data-fs-tool="line">╱<span>Line</span></button><button data-fs-tool="arrow">➜<span>Arrow</span></button><button data-fs-tool="circle">◯<span>Circle</span></button><button data-fs-tool="label">T<span>Label</span></button><button data-fs-tool="dimension">↔<span>Dimension</span></button><button data-fs-tool="note">📝<span>Note</span></button><button data-fs-tool="eraser">⌫<span>Erase</span></button></div><div class="fs-width-row" id="fsWidthRow"><button data-fs-width="2">Thin</button><button data-fs-width="5" class="active">Medium</button><button data-fs-width="10">Thick</button></div><div class="fs-stage" id="fsStage"><canvas id="fieldSketchCanvas"></canvas></div><div class="fs-selection-actions" id="fsSelectionActions" hidden><button class="action secondary" id="fsEdit">Edit</button><button class="action secondary" id="fsDuplicate">Duplicate</button><button class="action secondary danger" id="fsDeleteObject">Delete</button></div><div class="fs-actions"><button class="action secondary" id="fsUndo">↶ Undo</button><button class="action secondary" id="fsRedo">↷ Redo</button><button class="action secondary" id="fsZoomOut">− Zoom</button><button class="action secondary" id="fsZoomIn">+ Zoom</button><button class="action secondary" id="fsFit">Fit</button><label class="action secondary">Import<input id="fsBackground" type="file" accept="image/*" hidden></label><button class="action secondary" id="fsExport">Export PNG</button><button class="action secondary danger" id="fsClear">Clear</button></div><div class="fs-status" id="fsStatus"></div></div>`;wireFieldSketch()}
+function renderSketch(){const s=ensureFieldSketch(),p=fsPage();$('#screen').innerHTML=`<h2 class="section-title">Field Sketch <span class="version-chip">8.0.11 Stabilized Sketch</span></h2><div class="field-sketch-card"><div class="fs-page-row"><label>Sketch page<select id="fsPageSelect">${s.pages.map(x=>`<option value="${esc(x.id)}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><button class="action secondary" id="fsAddPage">+ Page</button><button class="action secondary danger" id="fsDeletePage">Delete</button></div><div class="fs-help"><b>Draw naturally. One finger or Pencil draws.</b><span>Two fingers pan and pinch-zoom. Select objects to move, resize, or edit.</span></div><div class="fs-toolbar" id="fsToolbar"><button data-fs-tool="select">☝<span>Select</span></button><button data-fs-tool="pencil">✏<span>Pencil</span></button><button data-fs-tool="line">╱<span>Line</span></button><button data-fs-tool="arrow">➜<span>Arrow</span></button><button data-fs-tool="circle">◯<span>Circle</span></button><button data-fs-tool="label">T<span>Label</span></button><button data-fs-tool="dimension">↔<span>Dimension</span></button><button data-fs-tool="note">📝<span>Note</span></button><button data-fs-tool="eraser">⌫<span>Erase</span></button></div><div class="fs-width-row" id="fsWidthRow"><button data-fs-width="2">Thin</button><button data-fs-width="5" class="active">Medium</button><button data-fs-width="10">Thick</button></div><div class="fs-stage" id="fsStage"><canvas id="fieldSketchCanvas"></canvas></div><div class="fs-selection-actions" id="fsSelectionActions" hidden><button class="action secondary" id="fsEdit">Edit</button><button class="action secondary" id="fsDuplicate">Duplicate</button><button class="action secondary danger" id="fsDeleteObject">Delete</button></div><div class="fs-actions"><button class="action secondary" id="fsUndo">↶ Undo</button><button class="action secondary" id="fsRedo">↷ Redo</button><button class="action secondary" id="fsZoomOut">− Zoom</button><button class="action secondary" id="fsZoomIn">+ Zoom</button><button class="action secondary" id="fsFit">Fit</button><label class="action secondary">Import<input id="fsBackground" type="file" accept="image/*" hidden></label><button class="action secondary" id="fsExport">Export PNG</button><button class="action secondary danger" id="fsClear">Clear</button></div><div class="fs-status" id="fsStatus"></div></div>`;wireFieldSketch()}
 function fsSetTool(t){fsTool=t;fsSelectedId=null;fsTransform=null;document.querySelectorAll('[data-fs-tool]').forEach(b=>b.classList.toggle('active',b.dataset.fsTool===t));fsSelectionUI();fsDraw();fsStatus(t==='select'?'Tap an object to select it. Drag to move; drag a blue handle to resize; tap it again to edit text.':t==='eraser'?'Tap or drag over an object to erase it.':`Selected: ${t}.`)}
 function fsStatus(s){const e=$('#fsStatus');if(e)e.textContent=s}
 function fsObj(){return fsPage().objects.find(o=>o.id===fsSelectedId)}
