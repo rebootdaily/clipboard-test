@@ -83,18 +83,18 @@ header,.tabs,.copy-grid,.actions,.office-header{display:none!important}
 body{background:#fff;font-size:9.5pt;color:#000}
 main{padding:0;max-width:none}
 .office-stats{grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0}
-.office-stats>div{box-shadow:none;padding:5px;border-radius:6px;break-inside:avoid}
+.office-stats>div{box-shadow:none;border:0;background:none;padding:3px 0;border-radius:0;break-inside:avoid}
 .office-stats b{font-size:14pt}
 .office-stats span{font-size:8pt}
 .office-section{box-shadow:none;border:0;border-radius:0;padding:0;margin:8px 0}
 .office-section h3{font-size:12pt;margin:0 0 3px;padding-bottom:2px;break-after:avoid}
-.office-rows{column-count:2;column-gap:22px}
-.office-row{break-inside:avoid;padding:2px 0;font-size:9.5pt}
+.office-rows{display:grid;grid-template-columns:1fr 1fr;gap:1px 22px;align-items:start}
+.office-row{break-inside:avoid;padding:2px 0;font-size:9.5pt;border-bottom:0}
 .office-row b{font-size:9.5pt}
 .office-row span,.office-row small{font-size:9pt}
-.office-row.has-note,.office-row.wide{column-span:all}
-.office-alert{padding:6px;margin:6px 0;font-size:9pt;break-inside:avoid}
-.follow-line{padding:3px 0;font-size:9.5pt;break-inside:avoid}
+.office-row.wide{grid-column:1/-1}
+.office-alert{background:none;border:0;border-left:3px solid #dfb83c;border-radius:0;padding:2px 0 2px 8px;margin:6px 0;font-size:9pt;break-inside:avoid}
+.follow-line{padding:3px 0;font-size:9.5pt;break-inside:avoid;border-bottom:0}
 .print-sketch-section{display:block}
 .print-photo-section{display:block}
 .print-sketch-block{break-inside:avoid;margin:8px 0}
